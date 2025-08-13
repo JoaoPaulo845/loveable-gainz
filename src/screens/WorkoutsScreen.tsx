@@ -327,29 +327,22 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                        }}
-                        aria-label={`Excluir treino ${workout.name}`}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Excluir Treino</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Tem certeza que deseja excluir o treino "{workout.name}"? Esta ação não pode ser desfeita e todas as sessões relacionadas também serão excluídas.
+                          Tem certeza que deseja excluir o treino "{workout.name}"? Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteWorkout(workout.id);
-                          }}
+                          onClick={() => handleDeleteWorkout(workout.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Excluir
