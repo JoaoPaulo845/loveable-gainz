@@ -39,10 +39,20 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
     }
   }, [workoutId, entries, startTime]);
 
+  // Reload workout data when coming back to session screen
   useEffect(() => {
     if (workoutId) {
       loadWorkout();
     }
+    
+    // Set up interval to check for workout updates every 2 seconds
+    const interval = setInterval(() => {
+      if (workoutId) {
+        loadWorkout();
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
   }, [workoutId]);
 
   // Force re-render when workout changes to update entries
@@ -53,7 +63,32 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
       
       if (savedSession) {
         const { entries: savedEntries } = JSON.parse(savedSession);
-        setEntries(savedEntries);
+        
+        // Sync saved entries with current workout exercises
+        const syncedEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
+          // Find existing entry for this exercise
+          const existingEntry = savedEntries.find((entry: SessionExerciseLog) => 
+            entry.exerciseName === exercise.name && entry.type === exercise.type
+          );
+          
+          if (existingEntry) {
+            return existingEntry;
+          } else {
+            // Create new entry for new exercise
+            switch (exercise.type) {
+              case 'PESO':
+                return { exerciseName: exercise.name, type: 'PESO' as const, sets: [null, null, null] as SetTriple };
+              case 'ALONGAMENTO':
+                return { exerciseName: exercise.name, type: 'ALONGAMENTO' as const, seconds: null };
+              case 'AEROBICO':
+                return { exerciseName: exercise.name, type: 'AEROBICO' as const, minutes: null };
+              default:
+                throw new Error(`Unknown exercise type: ${exercise.type}`);
+            }
+          }
+        });
+        
+        setEntries(syncedEntries);
       } else {
         // Create initial entries if no saved session
         const initialEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
@@ -76,30 +111,39 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
   const loadWorkout = async () => {
     if (!workoutId) return;
     
-    const workoutData = await getWorkout(workoutId);
-    if (workoutData) {
-      setWorkout(workoutData);
-      
-      // Set workout first, entries will be updated by useEffect
-
-      // Carregar hints para exercícios de alongamento e aeróbico
-      const newHints = new Map();
-      for (const exercise of workoutData.exercises) {
-        if (exercise.type === 'ALONGAMENTO') {
-          const [avg, last] = await Promise.all([
-            getGlobalAvgSeconds(exercise.name),
-            getGlobalLastSeconds(exercise.name),
-          ]);
-          newHints.set(exercise.name, { avg, last });
-        } else if (exercise.type === 'AEROBICO') {
-          const [avg, last] = await Promise.all([
-            getGlobalAvgMinutes(exercise.name),
-            getGlobalLastMinutes(exercise.name),
-          ]);
-          newHints.set(exercise.name, { avg, last });
+    try {
+      const workoutData = await getWorkout(workoutId);
+      if (workoutData) {
+        // Only update if the workout has actually changed
+        const workoutChanged = !workout || 
+          workout.exercises.length !== workoutData.exercises.length ||
+          JSON.stringify(workout.exercises) !== JSON.stringify(workoutData.exercises);
+        
+        if (workoutChanged) {
+          setWorkout(workoutData);
         }
+        
+        // Always reload hints as they may have changed
+        const newHints = new Map();
+        for (const exercise of workoutData.exercises) {
+          if (exercise.type === 'ALONGAMENTO') {
+            const [avg, last] = await Promise.all([
+              getGlobalAvgSeconds(exercise.name),
+              getGlobalLastSeconds(exercise.name),
+            ]);
+            newHints.set(exercise.name, { avg, last });
+          } else if (exercise.type === 'AEROBICO') {
+            const [avg, last] = await Promise.all([
+              getGlobalAvgMinutes(exercise.name),
+              getGlobalLastMinutes(exercise.name),
+            ]);
+            newHints.set(exercise.name, { avg, last });
+          }
+        }
+        setHints(newHints);
       }
-      setHints(newHints);
+    } catch (error) {
+      console.error('Error loading workout:', error);
     }
   };
 
