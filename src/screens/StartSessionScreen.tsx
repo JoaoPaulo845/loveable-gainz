@@ -23,7 +23,21 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
   const [entries, setEntries] = useState<SessionExerciseLog[]>([]);
   const [hints, setHints] = useState<Map<string, { avg: number | null; last: number | null }>>(new Map());
   const [viewerMedia, setViewerMedia] = useState(null);
-  const [startTime] = useState(new Date().toISOString());
+  const [startTime] = useState(() => {
+    const saved = localStorage.getItem(`session-${workoutId}`);
+    return saved ? JSON.parse(saved).startTime : new Date().toISOString();
+  });
+
+  // Save session data to localStorage whenever entries change
+  useEffect(() => {
+    if (workoutId && entries.length > 0) {
+      localStorage.setItem(`session-${workoutId}`, JSON.stringify({
+        workoutId,
+        startTime,
+        entries
+      }));
+    }
+  }, [workoutId, entries, startTime]);
 
   useEffect(() => {
     if (workoutId) {
@@ -34,21 +48,30 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
   // Force re-render when workout changes to update entries
   useEffect(() => {
     if (workout) {
-      const initialEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
-        switch (exercise.type) {
-          case 'PESO':
-            return { exerciseName: exercise.name, type: 'PESO' as const, sets: [null, null, null] as SetTriple };
-          case 'ALONGAMENTO':
-            return { exerciseName: exercise.name, type: 'ALONGAMENTO' as const, seconds: null };
-          case 'AEROBICO':
-            return { exerciseName: exercise.name, type: 'AEROBICO' as const, minutes: null };
-          default:
-            throw new Error(`Unknown exercise type: ${exercise.type}`);
-        }
-      });
-      setEntries(initialEntries);
+      // Try to restore saved session data first
+      const savedSession = localStorage.getItem(`session-${workoutId}`);
+      
+      if (savedSession) {
+        const { entries: savedEntries } = JSON.parse(savedSession);
+        setEntries(savedEntries);
+      } else {
+        // Create initial entries if no saved session
+        const initialEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
+          switch (exercise.type) {
+            case 'PESO':
+              return { exerciseName: exercise.name, type: 'PESO' as const, sets: [null, null, null] as SetTriple };
+            case 'ALONGAMENTO':
+              return { exerciseName: exercise.name, type: 'ALONGAMENTO' as const, seconds: null };
+            case 'AEROBICO':
+              return { exerciseName: exercise.name, type: 'AEROBICO' as const, minutes: null };
+            default:
+              throw new Error(`Unknown exercise type: ${exercise.type}`);
+          }
+        });
+        setEntries(initialEntries);
+      }
     }
-  }, [workout?.exercises]);
+  }, [workout?.exercises, workoutId]);
 
   const loadWorkout = async () => {
     if (!workoutId) return;
@@ -97,7 +120,15 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
     };
 
     await createSession(session);
+    // Clear saved session data after successful save
+    localStorage.removeItem(`session-${workoutId}`);
     onSessionComplete();
+  };
+
+  const handleCancelSession = () => {
+    // Clear saved session data when canceling
+    localStorage.removeItem(`session-${workoutId}`);
+    onCancel();
   };
 
   const formatHint = (value: number | null): string => {
@@ -138,7 +169,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Continuar Sessão</AlertDialogCancel>
-                <AlertDialogAction onClick={onCancel}>
+                <AlertDialogAction onClick={handleCancelSession}>
                   Cancelar Sessão
                 </AlertDialogAction>
               </AlertDialogFooter>
