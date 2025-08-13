@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatCard } from '../components/StatCard';
-import { yearlyFrequency, cardioMinutesPerWorkout, stretchSecondsPerWorkout, monthlyAverageFrequency, weightEvolution, cardioEvolution } from '../utils/metrics';
+import { yearlyFrequency, avgCardioMinutesPerWorkout, avgCardioMinutesPerMonth, monthlyAverageFrequency, weightEvolution, cardioEvolution } from '../utils/metrics';
 import { getWorkouts } from '../storage/db';
 import { Workout } from '../types';
 
 export function StatisticsScreen() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyData, setMonthlyData] = useState<number[]>([]);
-  const [cardioData, setCardioData] = useState<Array<{ workoutId: string; totalMinutes: number }>>([]);
-  const [stretchData, setStretchData] = useState<Array<{ workoutId: string; totalSeconds: number }>>([]);
+  const [avgCardioPerWorkout, setAvgCardioPerWorkout] = useState<Array<{ workoutId: string; avgMinutes: number }>>([]);
+  const [avgCardioPerMonth, setAvgCardioPerMonth] = useState<Array<{ month: string; avgMinutes: number }>>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [monthlyAvgFreq, setMonthlyAvgFreq] = useState<number>(0);
-  const [weightEvol, setWeightEvol] = useState<Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }>>([]);
+  const [weightEvol, setWeightEvol] = useState<Array<{ exerciseName: string; minWeight: number; maxWeight: number; lastWeight: number; improvement: number }>>([]);
   const [cardioEvol, setCardioEvol] = useState<{ initialAvg: number; currentAvg: number; improvement: number } | null>(null);
 
   useEffect(() => {
@@ -21,10 +21,10 @@ export function StatisticsScreen() {
   }, [selectedYear]);
 
   const loadData = async () => {
-    const [monthly, cardio, stretch, workoutsData, avgFreq, weightEvolutionData, cardioEvolutionData] = await Promise.all([
+    const [monthly, avgCardioWorkout, avgCardioMonth, workoutsData, avgFreq, weightEvolutionData, cardioEvolutionData] = await Promise.all([
       yearlyFrequency(selectedYear),
-      cardioMinutesPerWorkout(30),
-      stretchSecondsPerWorkout(30),
+      avgCardioMinutesPerWorkout(30),
+      avgCardioMinutesPerMonth(),
       getWorkouts(),
       monthlyAverageFrequency(),
       weightEvolution(),
@@ -32,8 +32,8 @@ export function StatisticsScreen() {
     ]);
 
     setMonthlyData(monthly);
-    setCardioData(cardio);
-    setStretchData(stretch);
+    setAvgCardioPerWorkout(avgCardioWorkout);
+    setAvgCardioPerMonth(avgCardioMonth);
     setWorkouts(workoutsData);
     setMonthlyAvgFreq(avgFreq);
     setWeightEvol(weightEvolutionData);
@@ -51,8 +51,8 @@ export function StatisticsScreen() {
   ];
 
   const maxMonthlyValue = Math.max(...monthlyData, 1);
-  const maxCardioValue = Math.max(...cardioData.map(d => d.totalMinutes), 1);
-  const maxStretchValue = Math.max(...stretchData.map(d => d.totalSeconds), 1);
+  const maxAvgCardioWorkoutValue = Math.max(...avgCardioPerWorkout.map(d => d.avgMinutes), 1);
+  const maxAvgCardioMonthValue = Math.max(...avgCardioPerMonth.map(d => d.avgMinutes), 1);
 
   // Gerar anos disponíveis (últimos 5 anos + próximos 2)
   const currentYear = new Date().getFullYear();
@@ -111,6 +111,65 @@ export function StatisticsScreen() {
         </div>
       </StatCard>
 
+      {/* Tempo Médio de Aeróbico por Treino */}
+      <StatCard title="Tempo Médio de Aeróbico por Treino (Últimos 30 dias)">
+        {avgCardioPerWorkout.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Sem dados suficientes
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {avgCardioPerWorkout.map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground truncate min-w-0 flex-1">
+                  {getWorkoutName(item.workoutId)}
+                </span>
+                <div className="flex-1 bg-muted rounded-sm h-6 relative max-w-32">
+                  <div 
+                    className="bg-primary h-full rounded-sm transition-all duration-300"
+                    style={{ 
+                      width: `${(item.avgMinutes / maxAvgCardioWorkoutValue) * 100}%` 
+                    }}
+                  />
+                </div>
+                <span className="text-sm w-12 text-right font-medium">
+                  {item.avgMinutes.toFixed(1)}m
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </StatCard>
+
+      {/* Tempo Médio de Aeróbico por Mês */}
+      <StatCard title="Tempo Médio de Aeróbico por Mês">
+        {avgCardioPerMonth.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Sem dados suficientes
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {avgCardioPerMonth.slice(-12).map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-20">
+                  {item.month}
+                </span>
+                <div className="flex-1 bg-muted rounded-sm h-6 relative">
+                  <div 
+                    className="bg-accent h-full rounded-sm transition-all duration-300"
+                    style={{ 
+                      width: `${(item.avgMinutes / maxAvgCardioMonthValue) * 100}%` 
+                    }}
+                  />
+                </div>
+                <span className="text-sm w-12 text-right font-medium">
+                  {item.avgMinutes.toFixed(1)}m
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </StatCard>
 
       {/* Frequência Mensal Média */}
       <StatCard title="Frequência Mensal Média">
@@ -124,9 +183,9 @@ export function StatisticsScreen() {
         </div>
       </StatCard>
 
-      {/* Evolução de Peso */}
+      {/* Evolução de Peso (3ª Série) */}
       {weightEvol.length > 0 && (
-        <StatCard title="Evolução de Peso (Primeiro vs Último)">
+        <StatCard title="Evolução de Peso - 3ª Série (Menor → Maior)">
           <div className="space-y-3">
             {weightEvol.slice(0, 5).map((item, index) => (
               <div key={index} className="space-y-2">
@@ -139,8 +198,11 @@ export function StatisticsScreen() {
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Primeiro: {item.firstWeight}kg</span>
-                  <span>Último: {item.lastWeight}kg</span>
+                  <span>Menor: {item.minWeight}kg</span>
+                  <span>Maior: {item.maxWeight}kg</span>
+                </div>
+                <div className="text-center text-xs text-primary font-medium">
+                  Último: {item.lastWeight}kg
                 </div>
               </div>
             ))}
@@ -153,7 +215,31 @@ export function StatisticsScreen() {
         </StatCard>
       )}
 
-
+      {/* Evolução do Tempo Aeróbico */}
+      {cardioEvol && (
+        <StatCard title="Evolução do Tempo Aeróbico">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className={`text-2xl font-bold mb-2 ${cardioEvol.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {cardioEvol.improvement >= 0 ? '+' : ''}{cardioEvol.improvement.toFixed(1)}%
+              </div>
+              <p className="text-sm text-muted-foreground">
+                de melhoria no tempo médio
+              </p>
+            </div>
+            <div className="flex justify-between text-sm">
+              <div className="text-center">
+                <div className="font-medium">{cardioEvol.initialAvg.toFixed(1)}min</div>
+                <div className="text-muted-foreground">Média inicial</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium">{cardioEvol.currentAvg.toFixed(1)}min</div>
+                <div className="text-muted-foreground">Média atual</div>
+              </div>
+            </div>
+          </div>
+        </StatCard>
+      )}
     </div>
   );
 }

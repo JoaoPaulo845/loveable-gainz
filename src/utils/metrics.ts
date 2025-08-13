@@ -189,6 +189,78 @@ export async function yearlyFrequency(year: number): Promise<number[]> {
   return monthCounts;
 }
 
+// Estatísticas - Tempo médio de aeróbico por treino (últimos N dias)
+export async function avgCardioMinutesPerWorkout(
+  lastNDays: number = 30
+): Promise<Array<{ workoutId: string; avgMinutes: number }>> {
+  const sessions = await getSessions();
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - lastNDays);
+  
+  const workoutData = new Map<string, { totalMinutes: number; sessionCount: number }>();
+  
+  sessions
+    .filter(session => new Date(session.startedAt) >= cutoffDate)
+    .forEach(session => {
+      const totalMinutes = session.entries
+        .filter(e => e.type === 'AEROBICO')
+        .reduce((sum, e) => {
+          if (e.type === 'AEROBICO' && e.minutes !== null) {
+            return sum + e.minutes;
+          }
+          return sum;
+        }, 0);
+      
+      if (totalMinutes > 0) {
+        const current = workoutData.get(session.workoutId) || { totalMinutes: 0, sessionCount: 0 };
+        workoutData.set(session.workoutId, {
+          totalMinutes: current.totalMinutes + totalMinutes,
+          sessionCount: current.sessionCount + 1
+        });
+      }
+    });
+  
+  return Array.from(workoutData.entries()).map(([workoutId, data]) => ({
+    workoutId,
+    avgMinutes: data.totalMinutes / data.sessionCount,
+  }));
+}
+
+// Estatísticas - Tempo de aeróbico médio por mês
+export async function avgCardioMinutesPerMonth(): Promise<Array<{ month: string; avgMinutes: number }>> {
+  const sessions = await getSessions();
+  const monthData = new Map<string, { totalMinutes: number; sessionCount: number }>();
+  
+  sessions.forEach(session => {
+    const date = new Date(session.startedAt);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    const totalMinutes = session.entries
+      .filter(e => e.type === 'AEROBICO')
+      .reduce((sum, e) => {
+        if (e.type === 'AEROBICO' && e.minutes !== null) {
+          return sum + e.minutes;
+        }
+        return sum;
+      }, 0);
+    
+    if (totalMinutes > 0) {
+      const current = monthData.get(monthKey) || { totalMinutes: 0, sessionCount: 0 };
+      monthData.set(monthKey, {
+        totalMinutes: current.totalMinutes + totalMinutes,
+        sessionCount: current.sessionCount + 1
+      });
+    }
+  });
+  
+  return Array.from(monthData.entries())
+    .map(([month, data]) => ({
+      month,
+      avgMinutes: data.totalMinutes / data.sessionCount,
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
 // Estatísticas - Tempo de aeróbico por treino (últimos N dias)
 export async function cardioMinutesPerWorkout(
   lastNDays: number = 30
@@ -274,44 +346,40 @@ export async function monthlyAverageFrequency(): Promise<number> {
   return sessions.length / monthsWithSessions.size;
 }
 
-// Estatísticas - Evolução de peso (primeiro vs último)
-export async function weightEvolution(): Promise<Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }>> {
+// Estatísticas - Evolução de peso (menor vs maior da terceira série)
+export async function weightEvolution(): Promise<Array<{ exerciseName: string; minWeight: number; maxWeight: number; lastWeight: number; improvement: number }>> {
   const sessions = await getSessions();
-  const exerciseWeights = new Map<string, number[]>();
+  const exerciseThirdSets = new Map<string, number[]>();
   
-  // Coletar todos os pesos por exercício em ordem cronológica
+  // Coletar apenas a terceira série de cada exercício em ordem cronológica
   sessions
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
     .forEach(session => {
       session.entries.forEach(entry => {
-        if (entry.type === 'PESO') {
+        if (entry.type === 'PESO' && entry.sets[2] !== null && !isNaN(entry.sets[2])) {
           const normalizedName = normalizeName(entry.exerciseName);
-          if (!exerciseWeights.has(normalizedName)) {
-            exerciseWeights.set(normalizedName, []);
+          if (!exerciseThirdSets.has(normalizedName)) {
+            exerciseThirdSets.set(normalizedName, []);
           }
-          const weights = exerciseWeights.get(normalizedName)!;
-          
-          // Adicionar pesos válidos das séries
-          entry.sets.forEach(weight => {
-            if (weight !== null && !isNaN(weight)) {
-              weights.push(weight);
-            }
-          });
+          const weights = exerciseThirdSets.get(normalizedName)!;
+          weights.push(entry.sets[2]);
         }
       });
     });
   
-  const evolution: Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }> = [];
+  const evolution: Array<{ exerciseName: string; minWeight: number; maxWeight: number; lastWeight: number; improvement: number }> = [];
   
-  exerciseWeights.forEach((weights, exerciseName) => {
+  exerciseThirdSets.forEach((weights, exerciseName) => {
     if (weights.length >= 2) {
-      const firstWeight = weights[0];
+      const minWeight = Math.min(...weights);
+      const maxWeight = Math.max(...weights);
       const lastWeight = weights[weights.length - 1];
-      const improvement = ((lastWeight - firstWeight) / firstWeight) * 100;
+      const improvement = ((maxWeight - minWeight) / minWeight) * 100;
       
       evolution.push({
         exerciseName,
-        firstWeight,
+        minWeight,
+        maxWeight,
         lastWeight,
         improvement
       });
