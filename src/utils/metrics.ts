@@ -442,3 +442,33 @@ export async function cardioEvolution(): Promise<{ initialAvg: number; currentAv
     improvement
   };
 }
+
+// Estatísticas - Frequência mensal (últimos 12 meses)
+export async function monthlyFrequency(): Promise<Array<{ month: string; count: number }>> {
+  const sessions = await getSessions();
+  const monthlyData = new Map<string, number>();
+  
+  const currentDate = new Date();
+  const monthsToShow = 12;
+  
+  // Inicializar últimos 12 meses com 0
+  for (let i = monthsToShow - 1; i >= 0; i--) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    monthlyData.set(monthKey, 0);
+  }
+  
+  // Contar sessões por mês
+  sessions.forEach(session => {
+    const date = new Date(session.startedAt);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (monthlyData.has(monthKey)) {
+      monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + 1);
+    }
+  });
+  
+  return Array.from(monthlyData.entries())
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}

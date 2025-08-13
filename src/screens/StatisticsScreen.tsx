@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatCard } from '../components/StatCard';
-import { yearlyFrequency, avgCardioMinutesPerWorkout, avgCardioMinutesPerMonth, monthlyAverageFrequency, weightEvolution, cardioEvolution } from '../utils/metrics';
+import { yearlyFrequency, avgCardioMinutesPerWorkout, avgCardioMinutesPerMonth, monthlyAverageFrequency, weightEvolution, cardioEvolution, monthlyFrequency } from '../utils/metrics';
 import { getWorkouts } from '../storage/db';
 import { Workout } from '../types';
 
@@ -13,6 +13,7 @@ export function StatisticsScreen() {
   const [avgCardioPerMonth, setAvgCardioPerMonth] = useState<Array<{ month: string; avgMinutes: number }>>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [monthlyAvgFreq, setMonthlyAvgFreq] = useState<number>(0);
+  const [monthlyFreq, setMonthlyFreq] = useState<Array<{ month: string; count: number }>>([]);
   const [weightEvol, setWeightEvol] = useState<Array<{ exerciseName: string; minWeight: number; maxWeight: number; lastWeight: number; improvement: number }>>([]);
   const [cardioEvol, setCardioEvol] = useState<{ initialAvg: number; currentAvg: number; improvement: number } | null>(null);
 
@@ -21,12 +22,13 @@ export function StatisticsScreen() {
   }, [selectedYear]);
 
   const loadData = async () => {
-    const [monthly, avgCardioWorkout, avgCardioMonth, workoutsData, avgFreq, weightEvolutionData, cardioEvolutionData] = await Promise.all([
+    const [monthly, avgCardioWorkout, avgCardioMonth, workoutsData, avgFreq, monthlyFreqData, weightEvolutionData, cardioEvolutionData] = await Promise.all([
       yearlyFrequency(selectedYear),
       avgCardioMinutesPerWorkout(30),
       avgCardioMinutesPerMonth(),
       getWorkouts(),
       monthlyAverageFrequency(),
+      monthlyFrequency(),
       weightEvolution(),
       cardioEvolution(),
     ]);
@@ -36,6 +38,7 @@ export function StatisticsScreen() {
     setAvgCardioPerMonth(avgCardioMonth);
     setWorkouts(workoutsData);
     setMonthlyAvgFreq(avgFreq);
+    setMonthlyFreq(monthlyFreqData);
     setWeightEvol(weightEvolutionData);
     setCardioEvol(cardioEvolutionData);
   };
@@ -53,6 +56,7 @@ export function StatisticsScreen() {
   const maxMonthlyValue = Math.max(...monthlyData, 1);
   const maxAvgCardioWorkoutValue = Math.max(...avgCardioPerWorkout.map(d => d.avgMinutes), 1);
   const maxAvgCardioMonthValue = Math.max(...avgCardioPerMonth.map(d => d.avgMinutes), 1);
+  const maxMonthlyFreqValue = Math.max(...monthlyFreq.map(d => d.count), 1);
 
   // Gerar anos disponíveis (últimos 5 anos + próximos 2)
   const currentYear = new Date().getFullYear();
@@ -164,6 +168,36 @@ export function StatisticsScreen() {
                 </div>
                 <span className="text-sm w-12 text-right font-medium">
                   {item.avgMinutes.toFixed(1)}m
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </StatCard>
+
+      {/* Frequência Mensal */}
+      <StatCard title="Frequência Mensal (Últimos 12 meses)">
+        {monthlyFreq.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Sem dados suficientes
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {monthlyFreq.slice(-12).map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-16">
+                  {item.month}
+                </span>
+                <div className="flex-1 bg-muted rounded-sm h-6 relative">
+                  <div 
+                    className="bg-secondary h-full rounded-sm transition-all duration-300"
+                    style={{ 
+                      width: `${(item.count / maxMonthlyFreqValue) * 100}%` 
+                    }}
+                  />
+                </div>
+                <span className="text-sm w-6 text-right font-medium">
+                  {item.count}
                 </span>
               </div>
             ))}
