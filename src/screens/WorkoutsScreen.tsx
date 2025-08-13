@@ -58,8 +58,18 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   };
 
   const handleDeleteWorkout = async (id: string) => {
-    await deleteWorkout(id);
-    await loadWorkouts();
+    try {
+      // Se o treino que está sendo excluído é o selecionado, limpar a seleção
+      if (selectedWorkout?.id === id) {
+        setSelectedWorkout(null);
+      }
+      
+      await deleteWorkout(id);
+      const refreshedWorkouts = await getWorkouts();
+      setWorkouts(refreshedWorkouts);
+    } catch (error) {
+      console.error('Erro ao excluir treino:', error);
+    }
   };
 
   const handleAddExercise = async () => {
@@ -317,23 +327,30 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                        aria-label={`Excluir treino ${workout.name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Excluir Treino</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Tem certeza que deseja excluir este treino? Esta ação não pode ser desfeita.
+                          Tem certeza que deseja excluir o treino "{workout.name}"? Esta ação não pode ser desfeita e todas as sessões relacionadas também serão excluídas.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDeleteWorkout(workout.id)}
-                          className="bg-destructive text-destructive-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteWorkout(workout.id);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Excluir
                         </AlertDialogAction>
