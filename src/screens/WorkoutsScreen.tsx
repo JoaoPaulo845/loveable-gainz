@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Play, Camera, Video } from 'lucide-react';
-import { Workout, ExerciseType, WorkoutExercise } from '../types';
+import { Workout, ExerciseType, WorkoutExercise, Media } from '../types';
 import { getWorkouts, createWorkout, updateWorkout, deleteWorkout } from '../storage/db';
 import { MediaThumb } from '../components/MediaThumb';
 import { MediaViewer } from '../components/MediaViewer';
@@ -28,7 +28,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseType, setNewExerciseType] = useState<ExerciseType>('PESO');
   const [editingExercise, setEditingExercise] = useState<number | null>(null);
-  const [viewerMedia, setViewerMedia] = useState(null);
+  const [viewerMedia, setViewerMedia] = useState<Media[]>([]);
 
   useEffect(() => {
     loadWorkouts();
@@ -211,7 +211,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                   {exercise.media && (
                     <MediaThumb
                       media={exercise.media}
-                      onPress={() => setViewerMedia(exercise.media)}
+                      onPress={() => setViewerMedia([exercise.media])}
                       className="mr-2"
                     />
                   )}
@@ -324,8 +324,8 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
         <MediaViewer
           media={viewerMedia}
-          isOpen={!!viewerMedia}
-          onClose={() => setViewerMedia(null)}
+          isOpen={viewerMedia.length > 0}
+          onClose={() => setViewerMedia([])}
         />
       </div>
     );

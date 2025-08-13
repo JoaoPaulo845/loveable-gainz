@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Save, X } from 'lucide-react';
-import { Workout, SessionExerciseLog, SetTriple } from '../types';
+import { Workout, SessionExerciseLog, SetTriple, Media } from '../types';
 import { getWorkout, createSession } from '../storage/db';
 import { getGlobalAvgSeconds, getGlobalLastSeconds, getGlobalAvgMinutes, getGlobalLastMinutes } from '../utils/metrics';
 import { WeightSetInputs } from '../components/WeightSetInputs';
@@ -22,7 +22,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [entries, setEntries] = useState<SessionExerciseLog[]>([]);
   const [hints, setHints] = useState<Map<string, { avg: number | null; last: number | null }>>(new Map());
-  const [viewerMedia, setViewerMedia] = useState(null);
+  const [viewerMedia, setViewerMedia] = useState<Media[]>([]);
   const [startTime] = useState(new Date().toISOString());
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
                   {exercise.media && (
                     <MediaThumb
                       media={exercise.media}
-                      onPress={() => setViewerMedia(exercise.media)}
+                      onPress={() => setViewerMedia([exercise.media])}
                     />
                   )}
                 </div>
@@ -235,8 +235,8 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
 
       <MediaViewer
         media={viewerMedia}
-        isOpen={!!viewerMedia}
-        onClose={() => setViewerMedia(null)}
+        isOpen={viewerMedia.length > 0}
+        onClose={() => setViewerMedia([])}
       />
     </div>
   );
