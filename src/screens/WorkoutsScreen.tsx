@@ -71,7 +71,14 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
       const updatedExercises = [...selectedWorkout.exercises, newExercise];
       await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
-      await loadWorkouts();
+      const refreshedWorkouts = await getWorkouts();
+      setWorkouts(refreshedWorkouts);
+      
+      // Atualizar o selectedWorkout com os dados atualizados
+      const updatedWorkout = refreshedWorkouts.find(w => w.id === selectedWorkout.id);
+      if (updatedWorkout) {
+        setSelectedWorkout(updatedWorkout);
+      }
       
       setNewExerciseName('');
       setNewExerciseType('PESO');
@@ -84,7 +91,14 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
       const updatedExercises = [...selectedWorkout.exercises];
       updatedExercises[index] = { ...updatedExercises[index], ...updates };
       await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
-      await loadWorkouts();
+      const refreshedWorkouts = await getWorkouts();
+      setWorkouts(refreshedWorkouts);
+      
+      // Atualizar o selectedWorkout com os dados atualizados
+      const updatedWorkout = refreshedWorkouts.find(w => w.id === selectedWorkout.id);
+      if (updatedWorkout) {
+        setSelectedWorkout(updatedWorkout);
+      }
     }
   };
 
@@ -92,7 +106,14 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
     if (selectedWorkout) {
       const updatedExercises = selectedWorkout.exercises.filter((_, i) => i !== index);
       await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
-      await loadWorkouts();
+      const refreshedWorkouts = await getWorkouts();
+      setWorkouts(refreshedWorkouts);
+      
+      // Atualizar o selectedWorkout com os dados atualizados
+      const updatedWorkout = refreshedWorkouts.find(w => w.id === selectedWorkout.id);
+      if (updatedWorkout) {
+        setSelectedWorkout(updatedWorkout);
+      }
     }
   };
 
