@@ -73,7 +73,11 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   };
 
   const handleAddExercise = async () => {
-    if (selectedWorkout && newExerciseName.trim()) {
+    if (!selectedWorkout || !newExerciseName.trim()) {
+      return;
+    }
+    
+    try {
       const newExercise: WorkoutExercise = {
         name: newExerciseName.trim(),
         type: newExerciseType,
@@ -81,18 +85,23 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
       const updatedExercises = [...selectedWorkout.exercises, newExercise];
       await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
-      const refreshedWorkouts = await getWorkouts();
-      setWorkouts(refreshedWorkouts);
       
-      // Atualizar o selectedWorkout com os dados atualizados
-      const updatedWorkout = refreshedWorkouts.find(w => w.id === selectedWorkout.id);
+      // Recarregar dados e atualizar estado
+      await loadWorkouts();
+      
+      // Buscar o treino atualizado
+      const updatedWorkouts = await getWorkouts();
+      const updatedWorkout = updatedWorkouts.find(w => w.id === selectedWorkout.id);
       if (updatedWorkout) {
         setSelectedWorkout(updatedWorkout);
       }
       
+      // Limpar formulário e fechar dialog
       setNewExerciseName('');
       setNewExerciseType('PESO');
       setShowExerciseDialog(false);
+    } catch (error) {
+      console.error('Erro ao adicionar exercício:', error);
     }
   };
 
@@ -251,6 +260,12 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                   value={newExerciseName}
                   onChange={(e) => setNewExerciseName(e.target.value)}
                   placeholder="Nome do exercício"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddExercise();
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -266,7 +281,11 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddExercise} className="w-full">
+              <Button 
+                onClick={handleAddExercise} 
+                className="w-full"
+                disabled={!newExerciseName.trim()}
+              >
                 Adicionar
               </Button>
             </div>
