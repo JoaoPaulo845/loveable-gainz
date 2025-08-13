@@ -137,72 +137,80 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
 
   if (!workout) {
     return (
-      <div className="p-4">
-        <p>Carregando treino...</p>
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <p className="text-muted-foreground">Carregando treino...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Sessão: {workout.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            Iniciada às {new Date(startTime).toLocaleTimeString()}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
+    <div className="min-h-screen bg-background pb-24">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">{workout.name}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {new Date(startTime).toLocaleTimeString()}
+              </p>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                    <X className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Cancelar</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="mx-4 max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar Sessão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja cancelar a sessão? Todos os dados serão perdidos.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                    <AlertDialogCancel className="w-full">Continuar Sessão</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancelSession} className="w-full">
+                      Cancelar Sessão
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              
+              <Button onClick={handleSaveSession} size="sm" className="flex-1 sm:flex-none">
+                <Save className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Salvar</span>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Cancelar Sessão</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja cancelar a sessão? Todos os dados serão perdidos.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Continuar Sessão</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCancelSession}>
-                  Cancelar Sessão
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          <Button onClick={handleSaveSession}>
-            <Save className="h-4 w-4 mr-2" />
-            Salvar Sessão
-          </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
         {workout.exercises.map((exercise, index) => {
           const entry = entries[index];
           if (!entry) return null; // Proteção contra entry undefined
           const exerciseHints = hints.get(exercise.name);
 
           return (
-            <Card key={index}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{exercise.name}</CardTitle>
+            <Card key={index} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-base sm:text-lg leading-tight flex-1 min-w-0">
+                    {exercise.name}
+                  </CardTitle>
                   {exercise.media && (
-                    <MediaThumb
-                      media={exercise.media}
-                      onPress={() => setViewerMedia(exercise.media)}
-                    />
+                    <div className="flex-shrink-0">
+                      <MediaThumb
+                        media={exercise.media}
+                        onPress={() => setViewerMedia(exercise.media)}
+                      />
+                    </div>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="pt-0 space-y-3">
                 {exercise.type === 'PESO' && entry.type === 'PESO' && (
                   <WeightSetInputs
                     workoutId={workout.id}
@@ -214,20 +222,23 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
 
                 {exercise.type === 'ALONGAMENTO' && entry.type === 'ALONGAMENTO' && (
                   <div className="space-y-2">
-                    <Label htmlFor={`stretch-${index}`}>Tempo (segundos)</Label>
+                    <Label htmlFor={`stretch-${index}`} className="text-sm font-medium">
+                      Tempo (segundos)
+                    </Label>
                     <Input
                       id={`stretch-${index}`}
                       type="number"
+                      inputMode="numeric"
                       placeholder="Segundos"
                       value={entry.seconds ?? ''}
                       onChange={(e) => {
                         const value = e.target.value === '' ? null : parseInt(e.target.value);
                         updateEntry(index, { seconds: value });
                       }}
-                      className="text-center"
+                      className="text-center text-lg h-12"
                     />
                     {exerciseHints && (
-                      <div className="flex justify-between text-xs text-muted-foreground">
+                      <div className="flex justify-between text-xs text-muted-foreground px-1">
                         <span>Últ: {formatHint(exerciseHints.last)}</span>
                         <span>Méd: {formatHint(exerciseHints.avg)}</span>
                       </div>
@@ -237,10 +248,13 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
 
                 {exercise.type === 'AEROBICO' && entry.type === 'AEROBICO' && (
                   <div className="space-y-2">
-                    <Label htmlFor={`cardio-${index}`}>Tempo (minutos)</Label>
+                    <Label htmlFor={`cardio-${index}`} className="text-sm font-medium">
+                      Tempo (minutos)
+                    </Label>
                     <Input
                       id={`cardio-${index}`}
                       type="number"
+                      inputMode="decimal"
                       step="0.5"
                       placeholder="Minutos"
                       value={entry.minutes ?? ''}
@@ -248,10 +262,10 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
                         const value = e.target.value === '' ? null : parseFloat(e.target.value);
                         updateEntry(index, { minutes: value });
                       }}
-                      className="text-center"
+                      className="text-center text-lg h-12"
                     />
                     {exerciseHints && (
-                      <div className="flex justify-between text-xs text-muted-foreground">
+                      <div className="flex justify-between text-xs text-muted-foreground px-1">
                         <span>Últ: {formatHint(exerciseHints.last)}</span>
                         <span>Méd: {formatHint(exerciseHints.avg)}</span>
                       </div>
