@@ -256,3 +256,121 @@ export async function stretchSecondsPerWorkout(
     totalSeconds,
   }));
 }
+
+// Estatísticas - Frequência mensal média
+export async function monthlyAverageFrequency(): Promise<number> {
+  const sessions = await getSessions();
+  if (sessions.length === 0) return 0;
+  
+  const monthsWithSessions = new Set<string>();
+  sessions.forEach(session => {
+    const date = new Date(session.startedAt);
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+    monthsWithSessions.add(monthKey);
+  });
+  
+  if (monthsWithSessions.size === 0) return 0;
+  
+  return sessions.length / monthsWithSessions.size;
+}
+
+// Estatísticas - Evolução de peso (primeiro vs último)
+export async function weightEvolution(): Promise<Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }>> {
+  const sessions = await getSessions();
+  const exerciseWeights = new Map<string, number[]>();
+  
+  // Coletar todos os pesos por exercício em ordem cronológica
+  sessions
+    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+    .forEach(session => {
+      session.entries.forEach(entry => {
+        if (entry.type === 'PESO') {
+          const normalizedName = normalizeName(entry.exerciseName);
+          if (!exerciseWeights.has(normalizedName)) {
+            exerciseWeights.set(normalizedName, []);
+          }
+          const weights = exerciseWeights.get(normalizedName)!;
+          
+          // Adicionar pesos válidos das séries
+          entry.sets.forEach(weight => {
+            if (weight !== null && !isNaN(weight)) {
+              weights.push(weight);
+            }
+          });
+        }
+      });
+    });
+  
+  const evolution: Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }> = [];
+  
+  exerciseWeights.forEach((weights, exerciseName) => {
+    if (weights.length >= 2) {
+      const firstWeight = weights[0];
+      const lastWeight = weights[weights.length - 1];
+      const improvement = ((lastWeight - firstWeight) / firstWeight) * 100;
+      
+      evolution.push({
+        exerciseName,
+        firstWeight,
+        lastWeight,
+        improvement
+      });
+    }
+  });
+  
+  return evolution.sort((a, b) => b.improvement - a.improvement);
+}
+
+// Estatísticas - Evolução de tempo aeróbico (média inicial vs atual)
+export async function cardioEvolution(): Promise<{ initialAvg: number; currentAvg: number; improvement: number } | null> {
+  const sessions = await getSessions();
+  if (sessions.length === 0) return null;
+  
+  const sortedSessions = sessions.sort(
+    (a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
+  );
+  
+  // Primeiro mês com dados de aeróbico
+  const firstMonthData: number[] = [];
+  const firstMonth = new Date(sortedSessions[0].startedAt);
+  const firstMonthEnd = new Date(firstMonth.getFullYear(), firstMonth.getMonth() + 1, 0);
+  
+  // Último mês com dados de aeróbico
+  const lastMonthData: number[] = [];
+  const lastSession = sortedSessions[sortedSessions.length - 1];
+  const lastMonth = new Date(lastSession.startedAt);
+  const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+  
+  sortedSessions.forEach(session => {
+    const sessionDate = new Date(session.startedAt);
+    const cardioMinutes = session.entries
+      .filter(e => e.type === 'AEROBICO')
+      .reduce((sum, e) => {
+        if (e.type === 'AEROBICO' && e.minutes !== null) {
+          return sum + e.minutes;
+        }
+        return sum;
+      }, 0);
+    
+    if (cardioMinutes > 0) {
+      if (sessionDate <= firstMonthEnd) {
+        firstMonthData.push(cardioMinutes);
+      }
+      if (sessionDate >= lastMonthStart) {
+        lastMonthData.push(cardioMinutes);
+      }
+    }
+  });
+  
+  if (firstMonthData.length === 0 || lastMonthData.length === 0) return null;
+  
+  const initialAvg = firstMonthData.reduce((a, b) => a + b, 0) / firstMonthData.length;
+  const currentAvg = lastMonthData.reduce((a, b) => a + b, 0) / lastMonthData.length;
+  const improvement = ((currentAvg - initialAvg) / initialAvg) * 100;
+  
+  return {
+    initialAvg,
+    currentAvg,
+    improvement
+  };
+}

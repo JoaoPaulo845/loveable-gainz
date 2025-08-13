@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatCard } from '../components/StatCard';
-import { yearlyFrequency, cardioMinutesPerWorkout, stretchSecondsPerWorkout } from '../utils/metrics';
+import { yearlyFrequency, cardioMinutesPerWorkout, stretchSecondsPerWorkout, monthlyAverageFrequency, weightEvolution, cardioEvolution } from '../utils/metrics';
 import { getWorkouts } from '../storage/db';
 import { Workout } from '../types';
 
@@ -12,23 +12,32 @@ export function StatisticsScreen() {
   const [cardioData, setCardioData] = useState<Array<{ workoutId: string; totalMinutes: number }>>([]);
   const [stretchData, setStretchData] = useState<Array<{ workoutId: string; totalSeconds: number }>>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [monthlyAvgFreq, setMonthlyAvgFreq] = useState<number>(0);
+  const [weightEvol, setWeightEvol] = useState<Array<{ exerciseName: string; firstWeight: number; lastWeight: number; improvement: number }>>([]);
+  const [cardioEvol, setCardioEvol] = useState<{ initialAvg: number; currentAvg: number; improvement: number } | null>(null);
 
   useEffect(() => {
     loadData();
   }, [selectedYear]);
 
   const loadData = async () => {
-    const [monthly, cardio, stretch, workoutsData] = await Promise.all([
+    const [monthly, cardio, stretch, workoutsData, avgFreq, weightEvolutionData, cardioEvolutionData] = await Promise.all([
       yearlyFrequency(selectedYear),
       cardioMinutesPerWorkout(30),
       stretchSecondsPerWorkout(30),
       getWorkouts(),
+      monthlyAverageFrequency(),
+      weightEvolution(),
+      cardioEvolution(),
     ]);
 
     setMonthlyData(monthly);
     setCardioData(cardio);
     setStretchData(stretch);
     setWorkouts(workoutsData);
+    setMonthlyAvgFreq(avgFreq);
+    setWeightEvol(weightEvolutionData);
+    setCardioEvol(cardioEvolutionData);
   };
 
   const getWorkoutName = (workoutId: string): string => {
@@ -131,6 +140,73 @@ export function StatisticsScreen() {
           </div>
         )}
       </StatCard>
+
+      {/* Frequência Mensal Média */}
+      <StatCard title="Frequência Mensal Média">
+        <div className="text-center py-4">
+          <div className="text-3xl font-bold text-primary mb-2">
+            {monthlyAvgFreq.toFixed(1)}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            treinos por mês em média
+          </p>
+        </div>
+      </StatCard>
+
+      {/* Evolução de Peso */}
+      {weightEvol.length > 0 && (
+        <StatCard title="Evolução de Peso (Primeiro vs Último)">
+          <div className="space-y-3">
+            {weightEvol.slice(0, 5).map((item, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium truncate flex-1 mr-2">
+                    {item.exerciseName}
+                  </span>
+                  <span className={`text-sm font-bold ${item.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {item.improvement >= 0 ? '+' : ''}{item.improvement.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Primeiro: {item.firstWeight}kg</span>
+                  <span>Último: {item.lastWeight}kg</span>
+                </div>
+              </div>
+            ))}
+            {weightEvol.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">
+                Dados insuficientes para análise de evolução
+              </p>
+            )}
+          </div>
+        </StatCard>
+      )}
+
+      {/* Evolução do Tempo Aeróbico */}
+      {cardioEvol && (
+        <StatCard title="Evolução do Tempo Aeróbico">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className={`text-2xl font-bold mb-2 ${cardioEvol.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {cardioEvol.improvement >= 0 ? '+' : ''}{cardioEvol.improvement.toFixed(1)}%
+              </div>
+              <p className="text-sm text-muted-foreground">
+                de melhoria no tempo médio
+              </p>
+            </div>
+            <div className="flex justify-between text-sm">
+              <div className="text-center">
+                <div className="font-medium">{cardioEvol.initialAvg.toFixed(1)}min</div>
+                <div className="text-muted-foreground">Média inicial</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium">{cardioEvol.currentAvg.toFixed(1)}min</div>
+                <div className="text-muted-foreground">Média atual</div>
+              </div>
+            </div>
+          </div>
+        </StatCard>
+      )}
 
       {/* Tempo de Alongamento por Treino (Opcional) */}
       {stretchData.length > 0 && (

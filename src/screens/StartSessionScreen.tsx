@@ -31,15 +31,10 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
     }
   }, [workoutId]);
 
-  const loadWorkout = async () => {
-    if (!workoutId) return;
-    
-    const workoutData = await getWorkout(workoutId);
-    if (workoutData) {
-      setWorkout(workoutData);
-      
-      // Inicializar entries
-      const initialEntries: SessionExerciseLog[] = workoutData.exercises.map(exercise => {
+  // Force re-render when workout changes to update entries
+  useEffect(() => {
+    if (workout) {
+      const initialEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
         switch (exercise.type) {
           case 'PESO':
             return { exerciseName: exercise.name, type: 'PESO' as const, sets: [null, null, null] as SetTriple };
@@ -52,6 +47,17 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
         }
       });
       setEntries(initialEntries);
+    }
+  }, [workout?.exercises]);
+
+  const loadWorkout = async () => {
+    if (!workoutId) return;
+    
+    const workoutData = await getWorkout(workoutId);
+    if (workoutData) {
+      setWorkout(workoutData);
+      
+      // Set workout first, entries will be updated by useEffect
 
       // Carregar hints para exercícios de alongamento e aeróbico
       const newHints = new Map();
