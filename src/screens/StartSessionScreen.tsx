@@ -155,6 +155,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
       <div className="space-y-4">
         {workout.exercises.map((exercise, index) => {
           const entry = entries[index];
+          if (!entry) return null; // Proteção contra entry undefined
           const exerciseHints = hints.get(exercise.name);
 
           return (

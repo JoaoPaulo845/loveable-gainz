@@ -111,35 +111,6 @@ export function StatisticsScreen() {
         </div>
       </StatCard>
 
-      {/* Tempo de Aeróbico por Treino */}
-      <StatCard title="Tempo de Aeróbico por Treino (Últimos 30 dias)">
-        {cardioData.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            Sem dados suficientes
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {cardioData.map((item, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground truncate min-w-0 flex-1">
-                  {getWorkoutName(item.workoutId)}
-                </span>
-                <div className="flex-1 bg-muted rounded-sm h-6 relative max-w-32">
-                  <div 
-                    className="bg-primary h-full rounded-sm transition-all duration-300"
-                    style={{ 
-                      width: `${(item.totalMinutes / maxCardioValue) * 100}%` 
-                    }}
-                  />
-                </div>
-                <span className="text-sm w-12 text-right font-medium">
-                  {item.totalMinutes.toFixed(1)}m
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </StatCard>
 
       {/* Frequência Mensal Média */}
       <StatCard title="Frequência Mensal Média">
@@ -182,57 +153,7 @@ export function StatisticsScreen() {
         </StatCard>
       )}
 
-      {/* Evolução do Tempo Aeróbico */}
-      {cardioEvol && (
-        <StatCard title="Evolução do Tempo Aeróbico">
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className={`text-2xl font-bold mb-2 ${cardioEvol.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {cardioEvol.improvement >= 0 ? '+' : ''}{cardioEvol.improvement.toFixed(1)}%
-              </div>
-              <p className="text-sm text-muted-foreground">
-                de melhoria no tempo médio
-              </p>
-            </div>
-            <div className="flex justify-between text-sm">
-              <div className="text-center">
-                <div className="font-medium">{cardioEvol.initialAvg.toFixed(1)}min</div>
-                <div className="text-muted-foreground">Média inicial</div>
-              </div>
-              <div className="text-center">
-                <div className="font-medium">{cardioEvol.currentAvg.toFixed(1)}min</div>
-                <div className="text-muted-foreground">Média atual</div>
-              </div>
-            </div>
-          </div>
-        </StatCard>
-      )}
 
-      {/* Tempo de Alongamento por Treino (Opcional) */}
-      {stretchData.length > 0 && (
-        <StatCard title="Tempo de Alongamento por Treino (Últimos 30 dias)">
-          <div className="space-y-2">
-            {stretchData.map((item, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground truncate min-w-0 flex-1">
-                  {getWorkoutName(item.workoutId)}
-                </span>
-                <div className="flex-1 bg-muted rounded-sm h-6 relative max-w-32">
-                  <div 
-                    className="bg-accent h-full rounded-sm transition-all duration-300"
-                    style={{ 
-                      width: `${(item.totalSeconds / maxStretchValue) * 100}%` 
-                    }}
-                  />
-                </div>
-                <span className="text-sm w-12 text-right font-medium">
-                  {Math.round(item.totalSeconds)}s
-                </span>
-              </div>
-            ))}
-          </div>
-        </StatCard>
-      )}
     </div>
   );
 }
