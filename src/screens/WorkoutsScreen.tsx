@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,14 +60,20 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
   const handleDeleteWorkout = async (id: string) => {
     try {
+      console.log('Excluindo treino com ID:', id);
+      
       // Se o treino que está sendo excluído é o selecionado, limpar a seleção
       if (selectedWorkout?.id === id) {
         setSelectedWorkout(null);
       }
       
+      // Excluir o treino específico
       await deleteWorkout(id);
-      const refreshedWorkouts = await getWorkouts();
-      setWorkouts(refreshedWorkouts);
+      
+      // Recarregar a lista de treinos
+      await loadWorkouts();
+      
+      console.log('Treino excluído com sucesso');
     } catch (error) {
       console.error('Erro ao excluir treino:', error);
     }
@@ -346,7 +353,9 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -361,7 +370,10 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDeleteWorkout(workout.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteWorkout(workout.id);
+                          }}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Excluir
