@@ -109,21 +109,13 @@ const App = () => {
           {/* Bottom Navigation */}
           <Card className="fixed bottom-0 left-0 right-0 rounded-none border-t border-l-0 border-r-0 border-b-0">
             <CardContent className="p-2">
-              <div className="grid grid-cols-4 gap-1">
-                {(['workouts', 'session', 'history', 'statistics'] as Screen[]).map((screen) => (
+              <div className="grid grid-cols-3 gap-1">
+                {(['workouts', 'history', 'statistics'] as Screen[]).map((screen) => (
                   <Button
                     key={screen}
                     variant={currentScreen === screen ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => {
-                       if (screen === 'session') {
-                         // Always check for active session when clicking session tab
-                         checkActiveSession();
-                         setCurrentScreen('session');
-                       } else {
-                        setCurrentScreen(screen);
-                      }
-                    }}
+                    onClick={() => setCurrentScreen(screen)}
                     disabled={false}
                     className="flex flex-col h-14 gap-1"
                   >
