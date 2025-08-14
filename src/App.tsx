@@ -107,7 +107,7 @@ const App = () => {
                     variant={currentScreen === screen ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => {
-                      if (screen === 'session') {
+                  if (screen === 'session') {
                         // Check for active session in localStorage when clicking session tab
                         const keys = Object.keys(localStorage);
                         const sessionKey = keys.find(key => key.startsWith('session-'));
@@ -115,6 +115,9 @@ const App = () => {
                           const workoutId = sessionKey.replace('session-', '');
                           setSessionWorkoutId(workoutId);
                           setCurrentScreen('session');
+                        } else {
+                          // No active session found, clear sessionWorkoutId
+                          setSessionWorkoutId(null);
                         }
                       } else {
                         setCurrentScreen(screen);
