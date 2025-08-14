@@ -92,6 +92,7 @@ export function HistoryScreen() {
                       <p>{formatDate(session.startedAt)} às {formatTime(session.startedAt)}</p>
                       <p>Duração: {formatDuration(session.startedAt, session.endedAt)}</p>
                       <p>{session.entries.length} exercícios</p>
+                      {session.calories && <p>{session.calories} kcal</p>}
                     </div>
                   </div>
                   
@@ -150,6 +151,7 @@ export function HistoryScreen() {
               <div className="text-sm text-muted-foreground">
                 <p>{formatDate(selectedSession.startedAt)} às {formatTime(selectedSession.startedAt)}</p>
                 <p>Duração: {formatDuration(selectedSession.startedAt, selectedSession.endedAt)}</p>
+                {selectedSession.calories && <p>Calorias: {selectedSession.calories} kcal</p>}
               </div>
               
               <div className="space-y-3">

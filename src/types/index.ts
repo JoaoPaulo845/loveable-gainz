@@ -31,6 +31,7 @@ export type Session = {
   startedAt: string; // ISO
   endedAt: string;   // ISO
   entries: SessionExerciseLog[];
+  calories?: number; // Estimativa de calorias queimadas
 };
 
 export type Db = { 

@@ -23,21 +23,23 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
   const [entries, setEntries] = useState<SessionExerciseLog[]>([]);
   const [hints, setHints] = useState<Map<string, { avg: number | null; last: number | null }>>(new Map());
   const [viewerMedia, setViewerMedia] = useState(null);
+  const [calories, setCalories] = useState<number | null>(null);
   const [startTime] = useState(() => {
     const saved = localStorage.getItem(`session-${workoutId}`);
     return saved ? JSON.parse(saved).startTime : new Date().toISOString();
   });
 
-  // Save session data to localStorage whenever entries change
+  // Save session data to localStorage whenever entries or calories change
   useEffect(() => {
     if (workoutId && entries.length > 0) {
       localStorage.setItem(`session-${workoutId}`, JSON.stringify({
         workoutId,
         startTime,
-        entries
+        entries,
+        calories
       }));
     }
-  }, [workoutId, entries, startTime]);
+  }, [workoutId, entries, startTime, calories]);
 
   // Reload workout data when coming back to session screen
   useEffect(() => {
@@ -62,7 +64,8 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
       const savedSession = localStorage.getItem(`session-${workoutId}`);
       
       if (savedSession) {
-        const { entries: savedEntries } = JSON.parse(savedSession);
+        const { entries: savedEntries, calories: savedCalories } = JSON.parse(savedSession);
+        setCalories(savedCalories || null);
         
         // Sync saved entries with current workout exercises
         const syncedEntries: SessionExerciseLog[] = workout.exercises.map(exercise => {
@@ -161,6 +164,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
       startedAt: startTime,
       endedAt: new Date().toISOString(),
       entries,
+      calories: calories || undefined,
     };
 
     await createSession(session);
@@ -320,6 +324,35 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
             </Card>
           );
         })}
+        
+        {/* Campo para estimativa de calorias */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg">Estimativa de Calorias</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-2">
+              <Label htmlFor="calories" className="text-sm font-medium">
+                Calorias queimadas (kcal)
+              </Label>
+              <Input
+                id="calories"
+                type="number"
+                inputMode="numeric"
+                placeholder="Ex: 250"
+                value={calories ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? null : parseInt(e.target.value);
+                  setCalories(value);
+                }}
+                className="text-center text-lg h-12"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                Estimativa opcional das calorias queimadas durante o treino
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <MediaViewer
