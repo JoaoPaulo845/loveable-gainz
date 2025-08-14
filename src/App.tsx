@@ -24,6 +24,15 @@ const App = () => {
     return sessionKey ? sessionKey.replace('session-', '') : null;
   });
 
+  // Function to check and restore active session
+  const checkActiveSession = () => {
+    const keys = Object.keys(localStorage);
+    const sessionKey = keys.find(key => key.startsWith('session-'));
+    const workoutId = sessionKey ? sessionKey.replace('session-', '') : null;
+    setSessionWorkoutId(workoutId);
+    return workoutId;
+  };
+
   const handleStartSession = (workoutId: string) => {
     setSessionWorkoutId(workoutId);
     setCurrentScreen('session');
@@ -107,23 +116,15 @@ const App = () => {
                     variant={currentScreen === screen ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => {
-                      if (screen === 'session') {
-                        // Check for active session in localStorage when clicking session tab
-                        const keys = Object.keys(localStorage);
-                        const sessionKey = keys.find(key => key.startsWith('session-'));
-                        if (sessionKey) {
-                          const workoutId = sessionKey.replace('session-', '');
-                          setSessionWorkoutId(workoutId);
-                        } else {
-                          // No active session found, clear sessionWorkoutId
-                          setSessionWorkoutId(null);
-                        }
-                        setCurrentScreen('session');
-                      } else {
+                       if (screen === 'session') {
+                         // Always check for active session when clicking session tab
+                         checkActiveSession();
+                         setCurrentScreen('session');
+                       } else {
                         setCurrentScreen(screen);
                       }
                     }}
-                    disabled={screen === 'session' && !sessionWorkoutId && !Object.keys(localStorage).some(key => key.startsWith('session-'))}
+                    disabled={false}
                     className="flex flex-col h-14 gap-1"
                   >
                     {getTabIcon(screen)}
