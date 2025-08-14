@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZamperFit</string>
+    <string name="title_activity_main">ZamperFit</string>
+    <string name="package_name">app.zamper.fit</string>
+    <string name="custom_url_scheme">app.zamper.fit</string>
+</resources>
