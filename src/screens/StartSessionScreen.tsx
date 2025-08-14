@@ -205,8 +205,11 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
 
   if (!workout) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <p className="text-muted-foreground">Carregando treino...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Nenhuma sessão ativa</h2>
+          <p className="text-muted-foreground">Inicie um treino na aba Treinos</p>
+        </div>
       </div>
     );
   }
