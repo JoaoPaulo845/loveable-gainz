@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Play, Camera, Video } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Camera, Video, Dumbbell } from 'lucide-react';
 import { Workout, ExerciseType, WorkoutExercise } from '../types';
 import { getWorkouts, createWorkout, updateWorkout, deleteWorkout } from '../storage/db';
 import { MediaThumb } from '../components/MediaThumb';
@@ -332,65 +332,126 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Treinos</h1>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Treino
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+      {/* Beautiful Header */}
+      <div className="bg-primary/5 border-b border-primary/10">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-primary rounded-xl">
+              <Dumbbell className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                ZamperFit
+              </h1>
+              <p className="text-muted-foreground text-sm">Seus treinos personalizados</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Meus Treinos</h2>
+              <p className="text-sm text-muted-foreground">{workouts.length} treino{workouts.length !== 1 ? 's' : ''} criado{workouts.length !== 1 ? 's' : ''}</p>
+            </div>
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Treino
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4">
-        {workouts.map((workout) => (
-          <Card key={workout.id} className="cursor-pointer hover:bg-accent/50" onClick={() => setSelectedWorkout(workout)}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{workout.name}</CardTitle>
-                <div className="flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir Treino</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir o treino "{workout.name}"? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteWorkout(workout.id);
-                          }}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {workout.exercises.length} exercícios
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="p-6 space-y-4">
+
+        {workouts.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="p-4 bg-muted/30 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <Dumbbell className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Nenhum treino criado</h3>
+            <p className="text-muted-foreground mb-4">Crie seu primeiro treino para começar!</p>
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Primeiro Treino
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {workouts.map((workout) => (
+              <Card 
+                key={workout.id} 
+                className="cursor-pointer hover:shadow-lg hover:border-primary/20 transition-all duration-200 bg-card/80 backdrop-blur-sm border-border/50" 
+                onClick={() => setSelectedWorkout(workout)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Dumbbell className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg font-semibold">{workout.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          {workout.exercises.length} exercício{workout.exercises.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Treino</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o treino "{workout.name}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteWorkout(workout.id);
+                              }}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardHeader>
+                {workout.exercises.length > 0 && (
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Toque para ver detalhes</span>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Dialog para criar treino */}
