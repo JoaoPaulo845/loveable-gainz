@@ -17,7 +17,12 @@ type Screen = 'workouts' | 'session' | 'history' | 'statistics';
 
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('workouts');
-  const [sessionWorkoutId, setSessionWorkoutId] = useState<string | null>(null);
+  const [sessionWorkoutId, setSessionWorkoutId] = useState<string | null>(() => {
+    // Check if there's an active session in localStorage
+    const keys = Object.keys(localStorage);
+    const sessionKey = keys.find(key => key.startsWith('session-'));
+    return sessionKey ? sessionKey.replace('session-', '') : null;
+  });
 
   const handleStartSession = (workoutId: string) => {
     setSessionWorkoutId(workoutId);
@@ -102,11 +107,20 @@ const App = () => {
                     variant={currentScreen === screen ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => {
-                      if (screen !== 'session') {
+                      if (screen === 'session') {
+                        // Check for active session in localStorage when clicking session tab
+                        const keys = Object.keys(localStorage);
+                        const sessionKey = keys.find(key => key.startsWith('session-'));
+                        if (sessionKey) {
+                          const workoutId = sessionKey.replace('session-', '');
+                          setSessionWorkoutId(workoutId);
+                          setCurrentScreen('session');
+                        }
+                      } else {
                         setCurrentScreen(screen);
                       }
                     }}
-                    disabled={screen === 'session' && !sessionWorkoutId}
+                    disabled={screen === 'session' && !sessionWorkoutId && !Object.keys(localStorage).some(key => key.startsWith('session-'))}
                     className="flex flex-col h-14 gap-1"
                   >
                     {getTabIcon(screen)}
