@@ -38,9 +38,9 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
         const completedSets = entry.sets.filter(set => set !== null).length;
         totalCalories += completedSets * 6;
       } else if (entry.type === 'AEROBICO') {
-        // Minutes * 10 kcal per minute
+        // Minutes * 6 kcal per minute
         if (entry.minutes) {
-          totalCalories += entry.minutes * 10;
+          totalCalories += entry.minutes * 6;
         }
       }
       // Ignore ALONGAMENTO
@@ -356,7 +356,7 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
                 {calculateCalories(entries)} kcal
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Baseado em séries de peso (6 kcal/série) e aeróbico (10 kcal/min)
+                Baseado em séries de peso (6 kcal/série) e aeróbico (6 kcal/min)
               </p>
             </div>
           </CardContent>
