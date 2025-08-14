@@ -203,12 +203,22 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
     return value !== null ? value.toFixed(1) : '-';
   };
 
-  if (!workout) {
+  if (!workoutId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Nenhuma sessão ativa</h2>
           <p className="text-muted-foreground">Inicie um treino na aba Treinos</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!workout) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Carregando treino...</h2>
         </div>
       </div>
     );
