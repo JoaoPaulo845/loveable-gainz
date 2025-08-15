@@ -296,26 +296,29 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
           
           <div className="bg-card rounded-lg border p-4">
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2 mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownloadWorkout(selectedWorkout)}
-                title="Baixar treino"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEditWorkoutName(selectedWorkout.name);
-                  setEditWorkoutDescription(selectedWorkout.description || '');
-                  setShowEditDialog(true);
-                }}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadWorkout(selectedWorkout)}
+                  title="Baixar treino"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditWorkoutName(selectedWorkout.name);
+                    setEditWorkoutDescription(selectedWorkout.description || '');
+                    setShowEditDialog(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+              
               <Button
                 variant="default"
                 onClick={() => onStartSession(selectedWorkout.id)}
