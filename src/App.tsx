@@ -102,13 +102,13 @@ const App = () => {
         <Sonner />
         <div className="min-h-screen bg-background flex flex-col">
           {/* Main Content */}
-          <div className="flex-1 pb-20">
+          <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto">
             {renderScreen()}
           </div>
 
           {/* Bottom Navigation */}
           <Card className="fixed bottom-0 left-0 right-0 rounded-none border-t border-l-0 border-r-0 border-b-0">
-            <CardContent className="p-2">
+            <CardContent className="p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
               <div className="grid grid-cols-3 gap-1">
                 {(['workouts', 'history', 'statistics'] as Screen[]).map((screen) => (
                   <Button

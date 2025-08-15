@@ -8,12 +8,14 @@ export type Media = {
 export type WorkoutExercise = {
   name: string;
   type: ExerciseType;
+  description?: string; // descrição do exercício
   media?: Media; // mídia associada ao EXERCÍCIO
 };
 
 export type Workout = {
   id: string;
   name: string;
+  description?: string; // descrição do treino
   exercises: WorkoutExercise[];
   createdAt: string;
 };

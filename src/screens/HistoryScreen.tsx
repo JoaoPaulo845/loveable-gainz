@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Eye } from 'lucide-react';
+import { Eye, Trash2, Download } from 'lucide-react';
 import { Session, Workout } from '../types';
 import { getSessions, getWorkouts, deleteSession } from '../storage/db';
 
@@ -65,6 +65,54 @@ export function HistoryScreen() {
     return `${minutes} min`;
   };
 
+  const handleDownloadHistory = () => {
+    let content = 'HISTÓRICO DE TREINOS - ZamperFit\n\n';
+    content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+    content += `Total de sessões: ${sessions.length}\n\n`;
+    content += '=' .repeat(60) + '\n\n';
+
+    sessions.forEach((session, index) => {
+      const workoutName = getWorkoutName(session.workoutId);
+      const date = formatDate(session.startedAt);
+      const time = formatTime(session.startedAt);
+      const duration = formatDuration(session.startedAt, session.endedAt);
+      
+      content += `${index + 1}. ${workoutName}\n`;
+      content += `Data: ${date} às ${time}\n`;
+      content += `Duração: ${duration} minutos\n`;
+      content += `Calorias: ${session.calories || 0} kcal\n`;
+      content += `Exercícios: ${session.entries.length}\n\n`;
+      
+      session.entries.forEach((entry, entryIndex) => {
+        content += `  ${entryIndex + 1}. ${entry.exerciseName} (${entry.type})\n`;
+        
+        if (entry.type === 'PESO') {
+          const sets = entry.sets.map((set, setIndex) => 
+            set !== null ? `S${setIndex + 1}: ${set}kg` : `S${setIndex + 1}: -`
+          ).join(', ');
+          content += `     ${sets}\n`;
+        } else if (entry.type === 'ALONGAMENTO') {
+          content += `     Tempo: ${entry.seconds || 0} segundos\n`;
+        } else if (entry.type === 'AEROBICO') {
+          content += `     Tempo: ${entry.minutes || 0} minutos\n`;
+        }
+        content += '\n';
+      });
+      
+      content += '-'.repeat(50) + '\n\n';
+    });
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Historico_ZamperFit_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const openSessionDetail = (session: Session) => {
     setSelectedSession(session);
     setShowDetailDialog(true);
@@ -72,7 +120,19 @@ export function HistoryScreen() {
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold">Histórico</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Histórico</h1>
+        {sessions.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadHistory}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Baixar Histórico
+          </Button>
+        )}
+      </div>
 
       {sessions.length === 0 ? (
         <Card>

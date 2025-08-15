@@ -137,7 +137,7 @@ export function StatisticsScreen() {
                   />
                 </div>
                 <span className="text-sm w-12 text-right font-medium">
-                  {item.avgMinutes.toFixed(1)}m
+                  {Math.round(item.avgMinutes)}m
                 </span>
               </div>
             ))}
@@ -167,7 +167,7 @@ export function StatisticsScreen() {
                   />
                 </div>
                 <span className="text-sm w-12 text-right font-medium">
-                  {item.avgMinutes.toFixed(1)}m
+                  {Math.round(item.avgMinutes)}m
                 </span>
               </div>
             ))}
@@ -209,7 +209,7 @@ export function StatisticsScreen() {
       <StatCard title="Frequência Mensal Média">
         <div className="text-center py-4">
           <div className="text-3xl font-bold text-primary mb-2">
-            {monthlyAvgFreq.toFixed(1)}
+            {Math.round(monthlyAvgFreq * 10) / 10}
           </div>
           <p className="text-sm text-muted-foreground">
             treinos por mês em média
@@ -228,7 +228,7 @@ export function StatisticsScreen() {
                     {item.exerciseName}
                   </span>
                   <span className={`text-sm font-bold ${item.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {item.improvement >= 0 ? '+' : ''}{item.improvement.toFixed(1)}%
+                    {item.improvement >= 0 ? '+' : ''}{Math.round(item.improvement)}%
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -255,7 +255,7 @@ export function StatisticsScreen() {
           <div className="space-y-4">
             <div className="text-center">
               <div className={`text-2xl font-bold mb-2 ${cardioEvol.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {cardioEvol.improvement >= 0 ? '+' : ''}{cardioEvol.improvement.toFixed(1)}%
+                {cardioEvol.improvement >= 0 ? '+' : ''}{Math.round(cardioEvol.improvement)}%
               </div>
               <p className="text-sm text-muted-foreground">
                 de melhoria no tempo médio
@@ -263,11 +263,11 @@ export function StatisticsScreen() {
             </div>
             <div className="flex justify-between text-sm">
               <div className="text-center">
-                <div className="font-medium">{cardioEvol.initialAvg.toFixed(1)}min</div>
+                <div className="font-medium">{Math.round(cardioEvol.initialAvg)}min</div>
                 <div className="text-muted-foreground">Média inicial</div>
               </div>
               <div className="text-center">
-                <div className="font-medium">{cardioEvol.currentAvg.toFixed(1)}min</div>
+                <div className="font-medium">{Math.round(cardioEvol.currentAvg)}min</div>
                 <div className="text-muted-foreground">Média atual</div>
               </div>
             </div>

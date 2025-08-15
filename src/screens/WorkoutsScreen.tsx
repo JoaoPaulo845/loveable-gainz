@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, Play, Camera, Video, Dumbbell } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Camera, Video, Dumbbell, Download } from 'lucide-react';
 import { Workout, ExerciseType, WorkoutExercise } from '../types';
 import { getWorkouts, createWorkout, updateWorkout, deleteWorkout } from '../storage/db';
 import { MediaThumb } from '../components/MediaThumb';
 import { MediaViewer } from '../components/MediaViewer';
+import * as XLSX from 'xlsx';
 
 interface WorkoutsScreenProps {
   onStartSession: (workoutId: string) => void;
@@ -21,11 +22,14 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [newWorkoutName, setNewWorkoutName] = useState('');
+  const [newWorkoutDescription, setNewWorkoutDescription] = useState('');
   const [editWorkoutName, setEditWorkoutName] = useState('');
+  const [editWorkoutDescription, setEditWorkoutDescription] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
+  const [newExerciseDescription, setNewExerciseDescription] = useState('');
   const [newExerciseType, setNewExerciseType] = useState<ExerciseType>('PESO');
   const [editingExercise, setEditingExercise] = useState<number | null>(null);
   const [viewerMedia, setViewerMedia] = useState(null);
@@ -41,18 +45,26 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
   const handleCreateWorkout = async () => {
     if (newWorkoutName.trim()) {
-      await createWorkout(newWorkoutName.trim());
+      const workout = await createWorkout(newWorkoutName.trim());
+      if (newWorkoutDescription.trim()) {
+        await updateWorkout(workout.id, { description: newWorkoutDescription.trim() });
+      }
       await loadWorkouts();
       setNewWorkoutName('');
+      setNewWorkoutDescription('');
       setShowCreateDialog(false);
     }
   };
 
   const handleUpdateWorkout = async () => {
     if (selectedWorkout && editWorkoutName.trim()) {
-      await updateWorkout(selectedWorkout.id, { name: editWorkoutName.trim() });
+      await updateWorkout(selectedWorkout.id, { 
+        name: editWorkoutName.trim(),
+        description: editWorkoutDescription.trim() || undefined
+      });
       await loadWorkouts();
       setEditWorkoutName('');
+      setEditWorkoutDescription('');
       setShowEditDialog(false);
       setSelectedWorkout(null);
     }
@@ -88,6 +100,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
       const newExercise: WorkoutExercise = {
         name: newExerciseName.trim(),
         type: newExerciseType,
+        description: newExerciseDescription.trim() || undefined,
       };
 
       const updatedExercises = [...selectedWorkout.exercises, newExercise];
@@ -105,6 +118,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
       
       // Limpar formulário e fechar dialog
       setNewExerciseName('');
+      setNewExerciseDescription('');
       setNewExerciseType('PESO');
       setShowExerciseDialog(false);
     } catch (error) {
@@ -162,26 +176,57 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
     input.click();
   };
 
+  const handleDownloadWorkout = (workout: Workout) => {
+    const workbook = XLSX.utils.book_new();
+    const worksheetData = [
+      ['Exercício', 'Descrição'],
+      ...workout.exercises.map(exercise => [
+        exercise.name,
+        exercise.description || ''
+      ])
+    ];
+    
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Exercícios');
+    
+    const fileName = `${workout.name.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   if (selectedWorkout) {
     return (
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <Button 
-              variant="ghost" 
-              onClick={() => setSelectedWorkout(null)}
-              className="mb-2"
-            >
-              ← Voltar
-            </Button>
-            <h1 className="text-2xl font-bold">{selectedWorkout.name}</h1>
-          </div>
+            <div>
+              <Button 
+                variant="ghost" 
+                onClick={() => setSelectedWorkout(null)}
+                className="mb-2"
+              >
+                ← Voltar
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">{selectedWorkout.name}</h1>
+                {selectedWorkout.description && (
+                  <p className="text-sm text-muted-foreground mt-1">{selectedWorkout.description}</p>
+                )}
+              </div>
+            </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDownloadWorkout(selectedWorkout)}
+              title="Baixar treino"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => {
                 setEditWorkoutName(selectedWorkout.name);
+                setEditWorkoutDescription(selectedWorkout.description || '');
                 setShowEditDialog(true);
               }}
             >
@@ -206,6 +251,9 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                   <div className="flex-1">
                     <h3 className="font-medium">{exercise.name}</h3>
                     <p className="text-sm text-muted-foreground">{exercise.type}</p>
+                    {exercise.description && (
+                      <p className="text-xs text-muted-foreground mt-1">{exercise.description}</p>
+                    )}
                   </div>
                   
                   {exercise.media && (
@@ -231,13 +279,33 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                     >
                       <Video className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleRemoveExercise(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir Exercício</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir o exercício "{exercise.name}"?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleRemoveExercise(index)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>
@@ -273,6 +341,15 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                       handleAddExercise();
                     }
                   }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="exercise-description">Descrição (opcional)</Label>
+                <Input
+                  id="exercise-description"
+                  value={newExerciseDescription}
+                  onChange={(e) => setNewExerciseDescription(e.target.value)}
+                  placeholder="Descrição do exercício"
                 />
               </div>
               <div>
@@ -313,6 +390,15 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                   value={editWorkoutName}
                   onChange={(e) => setEditWorkoutName(e.target.value)}
                   placeholder="Nome do treino"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-workout-description">Descrição (opcional)</Label>
+                <Input
+                  id="edit-workout-description"
+                  value={editWorkoutDescription}
+                  onChange={(e) => setEditWorkoutDescription(e.target.value)}
+                  placeholder="Descrição do treino"
                 />
               </div>
               <Button onClick={handleUpdateWorkout} className="w-full">
@@ -425,7 +511,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -468,6 +554,15 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                 value={newWorkoutName}
                 onChange={(e) => setNewWorkoutName(e.target.value)}
                 placeholder="Nome do treino"
+              />
+            </div>
+            <div>
+              <Label htmlFor="workout-description">Descrição (opcional)</Label>
+              <Input
+                id="workout-description"
+                value={newWorkoutDescription}
+                onChange={(e) => setNewWorkoutDescription(e.target.value)}
+                placeholder="Descrição do treino"
               />
             </div>
             <Button onClick={handleCreateWorkout} className="w-full">

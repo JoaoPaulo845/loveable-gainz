@@ -61,8 +61,7 @@ export async function updateWorkout(id: string, updates: Partial<Workout>): Prom
 export async function deleteWorkout(id: string): Promise<void> {
   const db = await loadDb();
   db.workouts = db.workouts.filter(w => w.id !== id);
-  // Remove sessões do treino também
-  db.sessions = db.sessions.filter(s => s.workoutId !== id);
+  // NÃO remove sessões do treino - histórico deve ser mantido
   await saveDb(db);
 }
 

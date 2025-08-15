@@ -108,5 +108,13 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent overflow on mobile devices */
+    overflow-x: hidden;
+  }
+  
+  /* Mobile responsive adjustments */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
   }
 }

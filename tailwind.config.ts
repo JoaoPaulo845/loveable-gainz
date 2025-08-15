@@ -18,6 +18,13 @@ export default {
 			}
 		},
 		extend: {
+			screens: {
+				'xs': '375px',
+				'safe-area-inset-bottom': '0px',
+			},
+			spacing: {
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
