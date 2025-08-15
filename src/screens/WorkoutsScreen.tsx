@@ -179,9 +179,10 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   const handleDownloadWorkout = (workout: Workout) => {
     const workbook = XLSX.utils.book_new();
     const worksheetData = [
-      ['Exercício', 'Descrição'],
+      ['Exercício', 'Tipo', 'Descrição'],
       ...workout.exercises.map(exercise => [
         exercise.name,
+        exercise.type,
         exercise.description || ''
       ])
     ];
@@ -191,6 +192,45 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
     
     const fileName = `${workout.name.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
     XLSX.writeFile(workbook, fileName);
+  };
+
+  const handleUploadWorkout = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+
+        // Skip header row
+        const exerciseData = jsonData.slice(1);
+        
+        // Create new workout from uploaded data
+        const workoutName = file.name.replace('.xlsx', '').replace(/_/g, ' ');
+        const newWorkout = await createWorkout(workoutName);
+        
+        const exercises: WorkoutExercise[] = exerciseData.map(row => ({
+          name: row[0] || '',
+          type: (row[1] as ExerciseType) || 'PESO',
+          description: row[2] || undefined
+        })).filter(ex => ex.name.trim() !== '');
+
+        await updateWorkout(newWorkout.id, { exercises });
+        await loadWorkouts();
+        
+        // Reset input
+        event.target.value = '';
+      } catch (error) {
+        console.error('Erro ao importar treino:', error);
+        alert('Erro ao importar treino. Verifique se o arquivo está no formato correto.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   if (selectedWorkout) {
@@ -439,13 +479,30 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
               <h2 className="text-xl font-semibold">Meus Treinos</h2>
               <p className="text-sm text-muted-foreground">{workouts.length} treino{workouts.length !== 1 ? 's' : ''} criado{workouts.length !== 1 ? 's' : ''}</p>
             </div>
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Treino
-            </Button>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                accept=".xlsx"
+                onChange={handleUploadWorkout}
+                className="hidden"
+                id="upload-workout"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById('upload-workout')?.click()}
+                className="hidden sm:flex"
+              >
+                <Download className="h-4 w-4 mr-2 rotate-180" />
+                Importar
+              </Button>
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Treino
+              </Button>
+            </div>
           </div>
         </div>
       </div>

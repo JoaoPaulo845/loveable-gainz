@@ -278,9 +278,16 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
             <Card key={index} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base sm:text-lg leading-tight flex-1 min-w-0">
-                    {exercise.name}
-                  </CardTitle>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base sm:text-lg leading-tight">
+                      {exercise.name}
+                    </CardTitle>
+                    {exercise.description && (
+                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                        {exercise.description}
+                      </p>
+                    )}
+                  </div>
                   {exercise.media && (
                     <div className="flex-shrink-0">
                       <MediaThumb

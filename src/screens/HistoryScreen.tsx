@@ -66,51 +66,58 @@ export function HistoryScreen() {
   };
 
   const handleDownloadHistory = () => {
-    let content = 'HISTÓRICO DE TREINOS - ZamperFit\n\n';
-    content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
-    content += `Total de sessões: ${sessions.length}\n\n`;
-    content += '=' .repeat(60) + '\n\n';
+    // Create backup data structure
+    const backupData = {
+      exportDate: new Date().toISOString(),
+      sessions: sessions,
+      workouts: workouts.filter(w => sessions.some(s => s.workoutId === w.id))
+    };
 
-    sessions.forEach((session, index) => {
-      const workoutName = getWorkoutName(session.workoutId);
-      const date = formatDate(session.startedAt);
-      const time = formatTime(session.startedAt);
-      const duration = formatDuration(session.startedAt, session.endedAt);
-      
-      content += `${index + 1}. ${workoutName}\n`;
-      content += `Data: ${date} às ${time}\n`;
-      content += `Duração: ${duration} minutos\n`;
-      content += `Calorias: ${session.calories || 0} kcal\n`;
-      content += `Exercícios: ${session.entries.length}\n\n`;
-      
-      session.entries.forEach((entry, entryIndex) => {
-        content += `  ${entryIndex + 1}. ${entry.exerciseName} (${entry.type})\n`;
-        
-        if (entry.type === 'PESO') {
-          const sets = entry.sets.map((set, setIndex) => 
-            set !== null ? `S${setIndex + 1}: ${set}kg` : `S${setIndex + 1}: -`
-          ).join(', ');
-          content += `     ${sets}\n`;
-        } else if (entry.type === 'ALONGAMENTO') {
-          content += `     Tempo: ${entry.seconds || 0} segundos\n`;
-        } else if (entry.type === 'AEROBICO') {
-          content += `     Tempo: ${entry.minutes || 0} minutos\n`;
-        }
-        content += '\n';
-      });
-      
-      content += '-'.repeat(50) + '\n\n';
-    });
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const jsonString = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Historico_ZamperFit_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_zamperfit_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleUploadHistory = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const backupData = JSON.parse(e.target?.result as string);
+        
+        // Validate backup data structure
+        if (!backupData.sessions || !Array.isArray(backupData.sessions)) {
+          throw new Error('Formato de backup inválido');
+        }
+
+        // Import sessions
+        const { createSession } = await import('../storage/db');
+        for (const session of backupData.sessions) {
+          // Remove id to create new session
+          const { id, ...sessionData } = session;
+          await createSession(sessionData);
+        }
+
+        await loadData();
+        alert(`${backupData.sessions.length} sessões importadas com sucesso!`);
+        
+        // Reset input
+        event.target.value = '';
+      } catch (error) {
+        console.error('Erro ao importar histórico:', error);
+        alert('Erro ao importar backup. Verifique se o arquivo está no formato correto.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const openSessionDetail = (session: Session) => {
@@ -120,18 +127,31 @@ export function HistoryScreen() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Histórico</h1>
-        {sessions.length > 0 && (
-          <Button
-            variant="outline"
+        <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleUploadHistory}
+            className="hidden"
+            id="upload-history"
+          />
+          <Button 
+            variant="outline" 
             size="sm"
-            onClick={handleDownloadHistory}
+            onClick={() => document.getElementById('upload-history')?.click()}
           >
-            <Download className="h-4 w-4 mr-2" />
-            Baixar Histórico
+            <Download className="h-4 w-4 mr-2 rotate-180" />
+            Importar
           </Button>
-        )}
+          {sessions.length > 0 && (
+            <Button onClick={handleDownloadHistory} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Backup
+            </Button>
+          )}
+        </div>
       </div>
 
       {sessions.length === 0 ? (
