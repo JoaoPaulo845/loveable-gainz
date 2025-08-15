@@ -102,7 +102,7 @@ const App = () => {
         <Sonner />
         <div className="min-h-screen bg-background flex flex-col">
           {/* Main Content */}
-          <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto">
+          <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">
             {renderScreen()}
           </div>
 
