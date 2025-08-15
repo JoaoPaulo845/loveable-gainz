@@ -588,12 +588,13 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Meus Treinos</h2>
+          
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold mb-1">Meus Treinos</h2>
               <p className="text-sm text-muted-foreground">{workouts.length} treino{workouts.length !== 1 ? 's' : ''} criado{workouts.length !== 1 ? 's' : ''}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <input
                 type="file"
                 accept=".xlsx"
@@ -606,12 +607,13 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                 size="icon"
                 onClick={() => document.getElementById('upload-workout')?.click()}
                 title="Importar treino"
+                className="h-10 w-10"
               >
                 <Download className="h-4 w-4 rotate-180" />
               </Button>
               <Button 
                 onClick={() => setShowCreateDialog(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-10 px-4"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Treino
