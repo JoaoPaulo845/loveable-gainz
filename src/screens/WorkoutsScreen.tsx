@@ -603,11 +603,11 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
               />
               <Button 
                 variant="outline" 
+                size="icon"
                 onClick={() => document.getElementById('upload-workout')?.click()}
-                className="flex"
+                title="Importar treino"
               >
-                <Download className="h-4 w-4 mr-2 rotate-180" />
-                Importar
+                <Download className="h-4 w-4 rotate-180" />
               </Button>
               <Button 
                 onClick={() => setShowCreateDialog(true)}
