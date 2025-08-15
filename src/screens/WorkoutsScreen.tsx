@@ -591,7 +591,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
           
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold mb-1">Meus Treinos</h2>
+              <h2 className="text-xl font-semibold mb-1">Treinos</h2>
               <p className="text-sm text-muted-foreground">{workouts.length} treino{workouts.length !== 1 ? 's' : ''} criado{workouts.length !== 1 ? 's' : ''}</p>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
