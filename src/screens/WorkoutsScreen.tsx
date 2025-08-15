@@ -294,45 +294,45 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
             ← Voltar aos Treinos
           </Button>
           
-          <div className="bg-card rounded-lg border p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-foreground mb-2 leading-tight">{selectedWorkout.name}</h1>
-                {selectedWorkout.description && (
-                  <p className="text-muted-foreground">{selectedWorkout.description}</p>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownloadWorkout(selectedWorkout)}
-                  title="Baixar treino"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEditWorkoutName(selectedWorkout.name);
-                    setEditWorkoutDescription(selectedWorkout.description || '');
-                    setShowEditDialog(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={() => onStartSession(selectedWorkout.id)}
-                  disabled={selectedWorkout.exercises.length === 0}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Iniciar Sessão
-                </Button>
-              </div>
+          <div className="bg-card rounded-lg border p-4">
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDownloadWorkout(selectedWorkout)}
+                title="Baixar treino"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditWorkoutName(selectedWorkout.name);
+                  setEditWorkoutDescription(selectedWorkout.description || '');
+                  setShowEditDialog(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => onStartSession(selectedWorkout.id)}
+                disabled={selectedWorkout.exercises.length === 0}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar
+              </Button>
+            </div>
+            
+            {/* Title and Description */}
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">{selectedWorkout.name}</h1>
+              {selectedWorkout.description && (
+                <p className="text-muted-foreground">{selectedWorkout.description}</p>
+              )}
             </div>
           </div>
         </div>
