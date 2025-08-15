@@ -283,144 +283,175 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
 
   if (selectedWorkout) {
     return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <Button 
-                variant="ghost" 
-                onClick={() => setSelectedWorkout(null)}
-                className="mb-2"
-              >
-                ← Voltar
-              </Button>
-              <div className="pr-4">
-                <h1 className="text-xl sm:text-2xl font-bold break-words">{selectedWorkout.name}</h1>
+      <div className="p-4 space-y-6">
+        {/* Header Section */}
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => setSelectedWorkout(null)}
+            className="p-0 h-auto text-muted-foreground hover:text-foreground"
+          >
+            ← Voltar aos Treinos
+          </Button>
+          
+          <div className="bg-card rounded-lg border p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold text-foreground mb-2 leading-tight">{selectedWorkout.name}</h1>
                 {selectedWorkout.description && (
-                  <p className="text-sm text-muted-foreground mt-1 break-words">{selectedWorkout.description}</p>
+                  <p className="text-muted-foreground">{selectedWorkout.description}</p>
                 )}
               </div>
-            </div>
-            <div className="flex gap-2 flex-shrink-0 mt-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleDownloadWorkout(selectedWorkout)}
-                title="Baixar treino"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  setEditWorkoutName(selectedWorkout.name);
-                  setEditWorkoutDescription(selectedWorkout.description || '');
-                  setShowEditDialog(true);
-                }}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => onStartSession(selectedWorkout.id)}
-                disabled={selectedWorkout.exercises.length === 0}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Iniciar Sessão
-              </Button>
+              
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadWorkout(selectedWorkout)}
+                  title="Baixar treino"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditWorkoutName(selectedWorkout.name);
+                    setEditWorkoutDescription(selectedWorkout.description || '');
+                    setShowEditDialog(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => onStartSession(selectedWorkout.id)}
+                  disabled={selectedWorkout.exercises.length === 0}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Iniciar Sessão
+                </Button>
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Exercises Section */}
         <div className="space-y-3">
-          {selectedWorkout.exercises.map((exercise, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{exercise.name}</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingExercise(index);
-                          setNewExerciseName(exercise.name);
-                          setNewExerciseDescription(exercise.description || '');
-                          setNewExerciseType(exercise.type);
-                          setShowExerciseDialog(true);
-                        }}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{exercise.type}</p>
-                    {exercise.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{exercise.description}</p>
-                    )}
-                  </div>
-                  
-                  {exercise.media && (
-                    <MediaThumb
-                      media={exercise.media}
-                      onPress={() => setViewerMedia(exercise.media)}
-                      className="mr-2"
-                    />
-                  )}
-                  
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleMediaUpload(index, 'image')}
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleMediaUpload(index, 'video')}
-                    >
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir Exercício</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir o exercício "{exercise.name}"?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleRemoveExercise(index)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+          {selectedWorkout.exercises.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="p-8 text-center">
+                <div className="text-muted-foreground">
+                  <Dumbbell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Nenhum exercício adicionado</p>
+                  <p className="text-sm">Comece adicionando exercícios ao seu treino</p>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            selectedWorkout.exercises.map((exercise, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground">{exercise.name}</h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingExercise(index);
+                            setNewExerciseName(exercise.name);
+                            setNewExerciseDescription(exercise.description || '');
+                            setNewExerciseType(exercise.type);
+                            setShowExerciseDialog(true);
+                          }}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs px-2 py-1 bg-secondary rounded-full font-medium">
+                          {exercise.type}
+                        </span>
+                      </div>
+                      {exercise.description && (
+                        <p className="text-sm text-muted-foreground">{exercise.description}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {exercise.media && (
+                        <MediaThumb
+                          media={exercise.media}
+                          onPress={() => setViewerMedia(exercise.media)}
+                          className="mr-2"
+                        />
+                      )}
+                      
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMediaUpload(index, 'image')}
+                          title="Adicionar Imagem"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMediaUpload(index, 'video')}
+                          title="Adicionar Vídeo"
+                        >
+                          <Video className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              title="Excluir Exercício"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Exercício</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o exercício "{exercise.name}"?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveExercise(index)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
+        {/* Add Exercise Button */}
         <Button
           onClick={() => setShowExerciseDialog(true)}
-          className="w-full"
+          className="w-full h-12 bg-primary hover:bg-primary/90"
+          size="lg"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-5 w-5 mr-2" />
           Adicionar Exercício
         </Button>
 
