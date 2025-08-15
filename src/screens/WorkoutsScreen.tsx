@@ -284,7 +284,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   if (selectedWorkout) {
     return (
       <div className="p-4 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <Button 
                 variant="ghost" 
@@ -300,36 +300,36 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                 )}
               </div>
             </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleDownloadWorkout(selectedWorkout)}
-              title="Baixar treino"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setEditWorkoutName(selectedWorkout.name);
-                setEditWorkoutDescription(selectedWorkout.description || '');
-                setShowEditDialog(true);
-              }}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => onStartSession(selectedWorkout.id)}
-              disabled={selectedWorkout.exercises.length === 0}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Iniciar Sessão
-            </Button>
+            <div className="flex gap-2 flex-shrink-0 mt-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleDownloadWorkout(selectedWorkout)}
+                title="Baixar treino"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  setEditWorkoutName(selectedWorkout.name);
+                  setEditWorkoutDescription(selectedWorkout.description || '');
+                  setShowEditDialog(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => onStartSession(selectedWorkout.id)}
+                disabled={selectedWorkout.exercises.length === 0}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Sessão
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div className="space-y-3">
           {selectedWorkout.exercises.map((exercise, index) => (
