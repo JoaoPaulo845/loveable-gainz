@@ -604,7 +604,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
               <Button 
                 variant="outline" 
                 onClick={() => document.getElementById('upload-workout')?.click()}
-                className="hidden sm:flex"
+                className="flex"
               >
                 <Download className="h-4 w-4 mr-2 rotate-180" />
                 Importar
