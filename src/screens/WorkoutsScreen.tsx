@@ -19,6 +19,11 @@ interface WorkoutsScreenProps {
 }
 
 export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
+  // Função para truncar descrições longas
+  const truncateDescription = (text: string, maxLength: number = 200): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [newWorkoutName, setNewWorkoutName] = useState('');
@@ -332,9 +337,11 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
             
             {/* Title and Description */}
             <div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">{selectedWorkout.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground mb-2 break-words">{selectedWorkout.name}</h1>
               {selectedWorkout.description && (
-                <p className="text-muted-foreground">{selectedWorkout.description}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed break-words">
+                  {truncateDescription(selectedWorkout.description)}
+                </p>
               )}
             </div>
           </div>
@@ -381,7 +388,9 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                         </span>
                       </div>
                       {exercise.description && (
-                        <p className="text-sm text-muted-foreground">{exercise.description}</p>
+                        <p className="text-sm text-muted-foreground break-words leading-relaxed">
+                          {truncateDescription(exercise.description, 150)}
+                        </p>
                       )}
                     </div>
                     

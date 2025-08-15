@@ -19,6 +19,11 @@ interface StartSessionScreenProps {
 }
 
 export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: StartSessionScreenProps) {
+  // Função para truncar descrições longas
+  const truncateDescription = (text: string, maxLength: number = 150): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [entries, setEntries] = useState<SessionExerciseLog[]>([]);
   const [hints, setHints] = useState<Map<string, { avg: number | null; last: number | null }>>(new Map());
@@ -283,8 +288,8 @@ export function StartSessionScreen({ workoutId, onSessionComplete, onCancel }: S
                       {exercise.name}
                     </CardTitle>
                     {exercise.description && (
-                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                        {exercise.description}
+                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed break-words">
+                        {truncateDescription(exercise.description)}
                       </p>
                     )}
                   </div>
