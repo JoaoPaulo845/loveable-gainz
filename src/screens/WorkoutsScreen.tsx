@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Play, Camera, Video, Dumbbell, Download } from 'lucide-react';
 import { Workout, ExerciseType, WorkoutExercise } from '../types';
-import { getWorkouts, createWorkout, updateWorkout, deleteWorkout } from '../storage/db';
+import { getWorkouts, createWorkout, updateWorkout, deleteWorkout, getSessions, createSession } from '../storage/db';
 import { MediaThumb } from '../components/MediaThumb';
 import { MediaViewer } from '../components/MediaViewer';
 import * as XLSX from 'xlsx';
@@ -43,6 +43,28 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
     setWorkouts(data);
   };
 
+  const updateExerciseNameInHistory = async (oldName: string, newName: string) => {
+    try {
+      const sessions = await getSessions();
+      const updatedSessions = sessions.map(session => ({
+        ...session,
+        entries: session.entries.map(entry => 
+          entry.exerciseName === oldName 
+            ? { ...entry, exerciseName: newName }
+            : entry
+        )
+      }));
+      
+      // Save updated sessions back to database
+      const db = await import('../storage/db').then(m => m.loadDb());
+      const currentDb = await db;
+      currentDb.sessions = updatedSessions;
+      await import('../storage/db').then(m => m.saveDb(currentDb));
+    } catch (error) {
+      console.error('Erro ao atualizar nomes no histórico:', error);
+    }
+  };
+
   const handleCreateWorkout = async () => {
     if (newWorkoutName.trim()) {
       const workout = await createWorkout(newWorkoutName.trim());
@@ -63,10 +85,17 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
         description: editWorkoutDescription.trim() || undefined
       });
       await loadWorkouts();
+      
+      // Atualizar o selectedWorkout com os dados atualizados
+      const refreshedWorkouts = await getWorkouts();
+      const updatedWorkout = refreshedWorkouts.find(w => w.id === selectedWorkout.id);
+      if (updatedWorkout) {
+        setSelectedWorkout(updatedWorkout);
+      }
+      
       setEditWorkoutName('');
       setEditWorkoutDescription('');
       setShowEditDialog(false);
-      setSelectedWorkout(null);
     }
   };
 
@@ -97,23 +126,42 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
     }
     
     try {
-      const newExercise: WorkoutExercise = {
-        name: newExerciseName.trim(),
-        type: newExerciseType,
-        description: newExerciseDescription.trim() || undefined,
-      };
+      if (editingExercise !== null) {
+        // Editar exercício existente
+        await handleUpdateExercise(editingExercise, {
+          name: newExerciseName.trim(),
+          type: newExerciseType,
+          description: newExerciseDescription.trim() || undefined,
+        });
+        
+        // Se houve mudança de nome, atualizar histórico
+        const oldName = selectedWorkout.exercises[editingExercise].name;
+        const newName = newExerciseName.trim();
+        if (oldName !== newName) {
+          await updateExerciseNameInHistory(oldName, newName);
+        }
+        
+        setEditingExercise(null);
+      } else {
+        // Adicionar novo exercício
+        const newExercise: WorkoutExercise = {
+          name: newExerciseName.trim(),
+          type: newExerciseType,
+          description: newExerciseDescription.trim() || undefined,
+        };
 
-      const updatedExercises = [...selectedWorkout.exercises, newExercise];
-      await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
-      
-      // Recarregar dados e atualizar estado
-      await loadWorkouts();
-      
-      // Buscar o treino atualizado
-      const updatedWorkouts = await getWorkouts();
-      const updatedWorkout = updatedWorkouts.find(w => w.id === selectedWorkout.id);
-      if (updatedWorkout) {
-        setSelectedWorkout(updatedWorkout);
+        const updatedExercises = [...selectedWorkout.exercises, newExercise];
+        await updateWorkout(selectedWorkout.id, { exercises: updatedExercises });
+        
+        // Recarregar dados e atualizar estado
+        await loadWorkouts();
+        
+        // Buscar o treino atualizado
+        const updatedWorkouts = await getWorkouts();
+        const updatedWorkout = updatedWorkouts.find(w => w.id === selectedWorkout.id);
+        if (updatedWorkout) {
+          setSelectedWorkout(updatedWorkout);
+        }
       }
       
       // Limpar formulário e fechar dialog
@@ -122,7 +170,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
       setNewExerciseType('PESO');
       setShowExerciseDialog(false);
     } catch (error) {
-      console.error('Erro ao adicionar exercício:', error);
+      console.error('Erro ao processar exercício:', error);
     }
   };
 
@@ -236,8 +284,8 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   if (selectedWorkout) {
     return (
       <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-            <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
               <Button 
                 variant="ghost" 
                 onClick={() => setSelectedWorkout(null)}
@@ -245,14 +293,14 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
               >
                 ← Voltar
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{selectedWorkout.name}</h1>
+              <div className="pr-4">
+                <h1 className="text-xl sm:text-2xl font-bold break-words">{selectedWorkout.name}</h1>
                 {selectedWorkout.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{selectedWorkout.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 break-words">{selectedWorkout.description}</p>
                 )}
               </div>
             </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="icon"
@@ -289,7 +337,22 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium">{exercise.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">{exercise.name}</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingExercise(index);
+                          setNewExerciseName(exercise.name);
+                          setNewExerciseDescription(exercise.description || '');
+                          setNewExerciseType(exercise.type);
+                          setShowExerciseDialog(true);
+                        }}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <p className="text-sm text-muted-foreground">{exercise.type}</p>
                     {exercise.description && (
                       <p className="text-xs text-muted-foreground mt-1">{exercise.description}</p>
@@ -362,10 +425,18 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
         </Button>
 
         {/* Dialog para adicionar exercício */}
-        <Dialog open={showExerciseDialog} onOpenChange={setShowExerciseDialog}>
+        <Dialog open={showExerciseDialog} onOpenChange={(open) => {
+          setShowExerciseDialog(open);
+          if (!open) {
+            setEditingExercise(null);
+            setNewExerciseName('');
+            setNewExerciseDescription('');
+            setNewExerciseType('PESO');
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Adicionar Exercício</DialogTitle>
+              <DialogTitle>{editingExercise !== null ? 'Editar Exercício' : 'Adicionar Exercício'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -410,7 +481,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
                 className="w-full"
                 disabled={!newExerciseName.trim()}
               >
-                Adicionar
+                {editingExercise !== null ? 'Salvar' : 'Adicionar'}
               </Button>
             </div>
           </DialogContent>
