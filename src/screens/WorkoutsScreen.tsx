@@ -572,7 +572,7 @@ export function WorkoutsScreen({ onStartSession }: WorkoutsScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+    <div className="bg-gradient-to-br from-background to-muted/30 min-h-full">
       {/* Beautiful Header */}
       <div className="bg-primary/5 border-b border-primary/10">
         <div className="p-6">
