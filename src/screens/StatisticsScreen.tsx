@@ -115,6 +115,48 @@ export function StatisticsScreen() {
         </div>
       </StatCard>
 
+      {/* Frequência Mensal */}
+      <StatCard title="Frequência Mensal (Últimos 12 meses)">
+        {monthlyFreq.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Sem dados suficientes
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {monthlyFreq.slice(-12).map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-16">
+                  {item.month}
+                </span>
+                <div className="flex-1 bg-muted rounded-sm h-6 relative">
+                  <div 
+                    className="bg-secondary h-full rounded-sm transition-all duration-300"
+                    style={{ 
+                      width: `${(item.count / maxMonthlyFreqValue) * 100}%` 
+                    }}
+                  />
+                </div>
+                <span className="text-sm w-6 text-right font-medium">
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </StatCard>
+
+      {/* Frequência Mensal Média */}
+      <StatCard title="Frequência Mensal Média">
+        <div className="text-center py-4">
+          <div className="text-3xl font-bold text-primary mb-2">
+            {Math.round(monthlyAvgFreq * 10) / 10}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            treinos por mês em média
+          </p>
+        </div>
+      </StatCard>
+
       {/* Tempo Médio de Aeróbico por Treino */}
       <StatCard title="Tempo Médio de Aeróbico por Treino (Últimos 30 dias)">
         {avgCardioPerWorkout.length === 0 ? (
@@ -173,48 +215,6 @@ export function StatisticsScreen() {
             ))}
           </div>
         )}
-      </StatCard>
-
-      {/* Frequência Mensal */}
-      <StatCard title="Frequência Mensal (Últimos 12 meses)">
-        {monthlyFreq.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            Sem dados suficientes
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {monthlyFreq.slice(-12).map((item, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground w-16">
-                  {item.month}
-                </span>
-                <div className="flex-1 bg-muted rounded-sm h-6 relative">
-                  <div 
-                    className="bg-secondary h-full rounded-sm transition-all duration-300"
-                    style={{ 
-                      width: `${(item.count / maxMonthlyFreqValue) * 100}%` 
-                    }}
-                  />
-                </div>
-                <span className="text-sm w-6 text-right font-medium">
-                  {item.count}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </StatCard>
-
-      {/* Frequência Mensal Média */}
-      <StatCard title="Frequência Mensal Média">
-        <div className="text-center py-4">
-          <div className="text-3xl font-bold text-primary mb-2">
-            {Math.round(monthlyAvgFreq * 10) / 10}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            treinos por mês em média
-          </p>
-        </div>
       </StatCard>
 
       {/* Evolução de Peso (3ª Série) */}
